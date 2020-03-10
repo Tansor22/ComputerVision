@@ -4,8 +4,15 @@
 
 #include <QFileDialog>
 
+
 const QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
 const bool saveProportion = true;
+
+float INCREASE_SHARPNESS_3x3[3][3] =  {
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}
+};
 
 MainForm::MainForm(QWidget *parent)
     : QWidget(parent)
@@ -35,7 +42,7 @@ void MainForm::setup() {
             "Open Image", IMAGES_PATH, "Image Files (*.png *.jpg *.bmp)");
     }
 
-    QPixmap imagePixmap;
+    //QPixmap imagePixmap;
     imagePixmap.load(fileName);
     if (saveProportion) {
         int w = imagePixmap.width();
@@ -50,8 +57,21 @@ void MainForm::setup() {
         painter.drawPixmap(0, 0, imagePixmap);
     }
     scene->addPixmap(imagePixmap);
+    tool = ConvolutionalTool(*INCREASE_SHARPNESS_3x3, 3);
+    int sample[4] = {
+       1, 2,
+       3, 4,
+    };
+    tool.process(2,2, sample);
     ui->graphicsView->setScene(scene);
-
+    QImage image = imagePixmap.toImage();
+    for (int x = 0; x < imagePixmap.width(); x++)
+        for (int y = 0; y < imagePixmap.height(); y++) {
+            image.setPixelColor(x,y,QRgb());
+        }
+        QFile file("newImage.png");
+        file.open(QIODevice::WriteOnly);
+        image.save(&file, "PNG");
 
 }
 MainForm::~MainForm()

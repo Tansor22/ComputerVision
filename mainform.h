@@ -1,6 +1,8 @@
 #ifndef MAINFORM_H
 #define MAINFORM_H
 
+#include "convolutionaltool.h"
+
 #include <QGraphicsScene>
 #include <QWidget>
 
@@ -18,6 +20,8 @@ public:
     QGraphicsScene *scene;
     void setup();
     QString fileName;
+    QPixmap imagePixmap;
+    ConvolutionalTool tool;
 
 private:
     Ui::MainForm *ui;
