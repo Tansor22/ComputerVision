@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     convolutionaltool.cpp \
+    dataretriver.cpp \
     helper.cpp \
     main.cpp \
     mainform.cpp
@@ -24,6 +25,7 @@ SOURCES += \
 HEADERS += \
     constants.h \
     convolutionaltool.h \
+    dataretriver.h \
     mainform.h
 
 FORMS += \

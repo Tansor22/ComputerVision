@@ -1,6 +1,7 @@
 #include "convolutionaltool.h"
 #include "constants.h"
 #include "helper.cpp"
+#include <dataretriver.h>
 #include <QDebug>
 
 ConvolutionalTool::ConvolutionalTool()
@@ -14,22 +15,22 @@ ConvolutionalTool::ConvolutionalTool(float *kernel, int kernelSize)
     this->kernelSize = kernelSize;
 }
 
-int* ConvolutionalTool::setBounds(int fillType, int pixels[], int columns, int gap){
+// generates temp canvas and sets edges according to fillType param
+int* ConvolutionalTool::setBounds(int fillType, int pixels[], int columns, int rows, int gap){
+    int tmpCols = columns + (2 * gap);
+    int tmpRows = rows + (2 * gap);
+    int tmpLength = tmpCols * tmpRows;
+    int *tmp = new int[tmpLength];
+
+    qDebug() << "Length is " << (rows * columns) << '\n'
+             << "Rows is " << rows << '\n'
+             << "TmpCols is " << tmpCols << '\n'
+             << "TmpRows is " << tmpRows << '\n'
+             << "TmpLength is " << tmpLength << '\n';
+
     switch(fillType) {
+    // blackbox
     case BORDER: {
-        int length = sizeof(pixels);
-        int rows = length / columns;
-        int tmpCols = columns + (2 * gap);
-        int tmpRows = rows + (2 * gap);
-        int tmpLength = tmpCols * tmpRows;
-        int *tmp = new int[tmpLength];
-
-        qDebug() << "Length is " << length << '\n'
-                 << "Rows is " << rows << '\n'
-                 << "TmpCols is " << tmpCols << '\n'
-                 << "TmpRows is " << tmpRows << '\n'
-                 << "TmpLength is " << tmpLength << '\n';
-
         for (int y = 0; y < tmpLength / tmpCols; y++)
             for (int x = 0; x < tmpCols; x++) {
                 // by changing these vars' names it's possible to populate differently
@@ -69,17 +70,78 @@ int* ConvolutionalTool::setBounds(int fillType, int pixels[], int columns, int g
                 // setting
                 tmp[y * tmpCols + x] = toSet;
             }
+        break;
 
+    }
+    case ZEROS: {
+        for (int y = 0; y < tmpLength / tmpCols; y++)
+            for (int x = 0; x < tmpCols; x++) {
+                tmp[y * tmpCols + x] =
+                        (x >= gap && x < columns + gap && y >= gap && y < rows + gap)
+                        ? pixels[(y - gap) * columns + (x - gap)]
+                        : 0;
+            }
         break;
     }
     }
+    return tmp;
+}
+// clips value, holds it in range min .. max
+int ConvolutionalTool::clip(int num, int max, int min) {
+    return num < min ? min : qMin(num, max);
 }
 
-void ConvolutionalTool::process(int w, int h, int pixels[]) {
+// sum
+int ConvolutionalTool::reduce(int* arr, int length) {
+    int sum = 0;
+    for (int i = 0; i < length; i++) sum += arr[i];
+    return sum;
+}
+
+// main logic
+int* ConvolutionalTool::process(int w, int h, int pixels[]) {
     int gap = (kernelSize / 2);
     int tmpH = h + (2 * gap);
     int tmpW = w + (2 * gap);
-    temp = setBounds(BORDER, pixels, w, gap);
-    // doesn't work
-    Print(temp);
+    temp = setBounds(BORDER, pixels, w, h, gap);
+    //printAs2D(temp, tmpH, tmpW);
+    DataRetriver dr = DataRetriver();
+    tempCanals = dr.retriveData(temp, tmpW, tmpH, R | G | B);
+    //printCanals(tempCanals, tmpH, tmpW);
+
+    canals = new int[w * h * 3];
+    int* values = new int[kernelSize * kernelSize];
+    int convGap = (kernelSize / 2);
+    int k, x, y;
+    // each canal, order is R G B, offset in canals array is w * h for each
+    for (int c = 0; c < 3; c++)
+        // rows
+        for (int tmpY = gap; tmpY < h + gap; tmpY++)
+            // columns
+            for (int tmpX = gap; tmpX < w + gap; tmpX++) {
+                k = 0;
+
+                // convolutional
+                for (int i = 0; i < kernelSize; i++)
+                    for (int j = 0; j < kernelSize; j++) {
+                        x = tmpX + j - convGap;
+                        y = tmpY + i - convGap;
+                        values[k++] = tempCanals[y * tmpW + x + (tmpW * tmpH * c)] * kernel[i * kernelSize + j];
+                    }
+
+                // reducing
+                canals[tmpX - convGap + (tmpY - convGap) * (tmpW - 2 * convGap) + h * w * c]
+                        = clip(reduce(values, kernelSize * kernelSize), 255, 0);
+            }
+    //printCanals(canals, h, w);
+    int* result = new int[w * h];
+    // constructing result
+    for (y = 0; y < h; y++)
+        for (x = 0; x < w; x++)
+            result[y * w + x] =
+                    qRgb(canals[y * w + x], // RED
+                    canals[y * w + x + w * h], // GREEN
+                    canals[y * w + x + w * h *2]); // BLUE
+    //printAs2D(result, h, w);
+    return result;
 }
