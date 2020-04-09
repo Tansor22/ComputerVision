@@ -3,23 +3,27 @@
 #include "ui_mainform.h"
 #include <dataretriver.h>
 #include <QFileDialog>
+#include <QDebug>
+#include <helper.h>
 
 
 const QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
 const bool saveProportion = true;
 
-float INCREASE_SHARPNESS[] =  {
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, 9.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f
+double INCREASE_SHARPNESS[] =  {
+    -1.0, -1.0, -1.0,
+    -1.0, 9.0, -1.0,
+    -1.0, -1.0, -1.0
 };
-
-float GAUSS_BLUR[] = {
-    0.000789f, 0.006581f, 0.013347f, 0.006581f, 0.000789f,
-    0.006581f, 0.054901f, 0.111345f, 0.054901f, 0.006581f,
-    0.013347f, 0.11345f, 0.225821f, 0.111345f, 0.013347f,
-    0.006581f, 0.054901f, 0.111345f, 0.054901f, 0.006581f,
-    0.000789f, 0.006581f, 0.013347f, 0.006581f, 0.000789f
+double SOBEL_X[] =  {
+    1.0, 0, -1.0,
+    2.0, 0, -2.0,
+    1.0, 0, -1.0
+};
+double SOBEL_Y[] =  {
+    1.0, 2.0, 1.0,
+    0.0, 0.0, 0.0,
+    -1.0, -2.0, -1.0
 };
 
 MainForm::MainForm(QWidget *parent)
@@ -29,8 +33,7 @@ MainForm::MainForm(QWidget *parent)
     ui->setupUi(this);
     setup();
 }
-
-void MainForm::setup() {
+void MainForm::setupGUI() {
     scene = new QGraphicsScene;
     QPixmap pixmap(ui->graphicsView->size());
     QPainter painter(&pixmap);
@@ -65,22 +68,44 @@ void MainForm::setup() {
     } else {
         painter.drawPixmap(0, 0, imagePixmap);
     }
-    tool = ConvolutionalTool(GAUSS_BLUR, 5);
-    int sample[4] = {
-        1, 2,
-        3, 4,
-    };
-    DataRetriver dr = DataRetriver();
-    int* data = dr.retriveData(imagePixmap);
-    int * result = tool.process(/*2*/ imagePixmap.width(),
-                                /*2*/ imagePixmap.height(),
-                                /*&sample[0]*/ data);
     ui->graphicsView->setScene(scene);
+}
+void MainForm::setup() {
+    setupGUI();
+    // GAUSSIAN_BLUR
+    // should be odd
+    /*
+    double sigma = 7;
+    int size = floor(3 * sigma);
+    double* kernel =  Helper::gauss(sigma);
+    */
+    // SOBEL_X
+
+    int size = 3;
+    double* kernel =  SOBEL_X;
+
+    // SOBEL_Y
+    /*
+    //int size = 3;
+    //double* kernel =  SOBEL_Y;
+    */
+
+    tool = new ParallelConvolutionalTool(imagePixmap.width(),
+                                         imagePixmap.height(),
+                                         kernel,
+                                         size);
+
+    DataRetriver dr = DataRetriver(NULL);
+    int* data = dr.retriveData(imagePixmap);
+    int * result = tool->process(data);
+
+
     QImage image = imagePixmap.toImage();
+
     for (int y = 0; y < imagePixmap.height(); y++)
-        for (int x = 0; x < imagePixmap.width(); x++) {
+        for (int x = 0; x < imagePixmap.width(); x++)
             image.setPixelColor(x,y,result[y * imagePixmap.width() + x]);
-        }
+
     QFile file("newImage.png");
     file.open(QIODevice::WriteOnly);
     image.save(&file, "PNG");

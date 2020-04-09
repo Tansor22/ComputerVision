@@ -6,4 +6,5 @@ const int BORDER = 1;
 const int R = 1;
 const int G = 2;
 const int B = 4;
+const int A = 5;
 #endif // CONSTANTS_H

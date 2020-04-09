@@ -1,72 +1,36 @@
-#include <QDebug>
-#include <QPixmap>
-#include <QImage>
-#include <constants.h>
+#include "helper.h"
 
-//class DataRetriver {
-//    public:
-//    // order is R G B, offset is w * h
-//    int* retriveData(QImage qi, int canals) {
-//        int coef = 0;
-//        if ((R & canals ) == R) coef++;
-//        if ((G & canals ) == G) coef++;
-//        if ((B & canals ) == B) coef++;
+double Helper::normalizeStraight(int rgb) {
+    return rgb / 255.0;
+}
+int Helper::normalizeReverse(double normalized) {
+    return (int) (normalized * 255.0);
+}
+double* Helper::gauss(double sigma) {
+    int size = floor(3 * sigma);
+    double *matrix_gauss = new double[size * size];
+    int halfSize = size / 2;
+    double ss2 = 2 * sigma * sigma;
+    double firstDrob = 1.0 / (M_PI * ss2);
+    double test_sum = 0.0;
+    int rowI = 0;
+    for(int x = -halfSize ; x <= halfSize; x++){
+        int columnI = 0;
+        for(int y = -halfSize; y <= halfSize ; y++){
+            double gauss = firstDrob * exp( -(x * x + y * y) / ss2);
+            matrix_gauss[rowI * size + columnI++] = gauss;
+            test_sum += gauss;
+        }
+        rowI++;
+    }
+    for(int x = -halfSize ; x <= halfSize; x++)
+        for(int y = -halfSize; y <= halfSize ; y++)
+            matrix_gauss[(x + halfSize) * size + y + halfSize] /= test_sum;
 
-//        int w = qi.width();
-//        int h = qi.height();
-//        int* data = new int[w * h * coef];
-//        for (int i = 0; i < h; i++)
-//            for (int j = 0; j < w; j++) {
-//                QRgb rgb = qi.pixel(j,i);
-//                if ((R & canals ) == R)
-//                    data[i * w + j] = qRed(rgb);
-//                 if ((G & canals ) == G)
-//                     data[(i * w + j) + w * h] = qGreen(rgb);
-//                  if ((B & canals ) == B)
-//                      data[(i * w + j) + w * h * 2] = qBlue(rgb);
-//            }
-//        return data;
-//    }
-
-//    int* retriveData(int* arr, int w, int h, int canals) {
-//        int coef = 0;
-//        if ((R & canals ) == R) coef++;
-//        if ((G & canals ) == G) coef++;
-//        if ((B & canals ) == B) coef++;
-
-//        int* data = new int[w * h * coef];
-//        for (int i = 0; i < h; i++)
-//            for (int j = 0; j < w; j++) {
-//                QRgb rgb = arr[i * w + j];
-//                if ((R & canals ) == R)
-//                    data[i * w + j] = qRed(rgb);
-//                 if ((G & canals ) == G)
-//                     data[(i * w + j) + w * h] = qGreen(rgb);
-//                  if ((B & canals ) == B)
-//                      data[(i * w + j) + w * h * 2] = qBlue(rgb);
-//            }
-//        return data;
-//    }
-//    int* retriveData(QImage qi) {
-//        int w = qi.width();
-//        int h = qi.height();
-//        int* data = new int[w * h];
-//        for (int i = 0; i < h; i++)
-//            for (int j = 0; j < w; j++)
-//                data[i * w + j] = qi.pixel(j,i);
-//        return data;
-//    }
-//    int* retriveData(QPixmap qp) {
-//         return this->retriveData(qp.toImage());
-//    }
-
-//    int* retriveData(QPixmap qp, int canals) {
-//        return this->retriveData(qp.toImage(), canals);
-//    }
-//};
-
-
-void printAs2D(int *arr, int rows, int columns) {
+    Helper::printAs2D(matrix_gauss, size, size);
+    return matrix_gauss;
+}
+void Helper::printAs2D(double *arr, int rows, int columns) {
     std::string str = "";
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
@@ -76,9 +40,11 @@ void printAs2D(int *arr, int rows, int columns) {
         str += "\t\n";
 
     }
+    double check = arr[rows * columns - 1];
+    // int s = 0;
     qDebug() << str.c_str() << endl;
 }
-void printCanals(int *arr, int rows, int columns) {
+void Helper::printCanals(int *arr, int rows, int columns) {
     std::string str = "";
     for (int c = 0; c < 3; c++){
         str += "Canal " + std::to_string(c + 1) + "\t\n";

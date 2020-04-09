@@ -19,14 +19,21 @@ SOURCES += \
     convolutionaltool.cpp \
     dataretriver.cpp \
     helper.cpp \
+    ipworker.cpp \
     main.cpp \
-    mainform.cpp
+    mainform.cpp \
+    parallelconvolutionaltool.cpp \
+    sequentialconvolutionaltool.cpp
 
 HEADERS += \
     constants.h \
     convolutionaltool.h \
     dataretriver.h \
-    mainform.h
+    helper.h \
+    ipworker.h \
+    mainform.h \
+    parallelconvolutionaltool.h \
+    sequentialconvolutionaltool.h
 
 FORMS += \
     mainform.ui

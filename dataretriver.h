@@ -7,13 +7,19 @@
 
 class DataRetriver
 {
+private:
+    double (*mapper)(int);
+    double map(int rgb);
 public:
     DataRetriver();
-    int* retriveData(QImage qi, int canals);
-    int* retriveData(int* arr, int w, int h, int canals);
+    DataRetriver(double (*mapper)(int));
+    // splits into canals
+    double* retriveData(QImage qi, int canals);
+    double* retriveData(int* arr, int w, int h, int canals);
+    double* retriveData(QPixmap qp, int canals);
+    // retriveng ints from Qt objects
     int* retriveData(QImage qi);
     int* retriveData(QPixmap qp);
-    int* retriveData(QPixmap qp, int canals);
 };
 
 #endif // DATARETRIVER_H
