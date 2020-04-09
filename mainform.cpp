@@ -74,21 +74,21 @@ void MainForm::setup() {
     setupGUI();
     // GAUSSIAN_BLUR
     // should be odd
-    /*
-    double sigma = 7;
+
+    double sigma = 3;
     int size = floor(3 * sigma);
     double* kernel =  Helper::gauss(sigma);
-    */
+
     // SOBEL_X
 
-    int size = 3;
-    double* kernel =  SOBEL_X;
+    //int size = 3;
+    //double* kernel =  SOBEL_X;
 
     // SOBEL_Y
-    /*
+
     //int size = 3;
     //double* kernel =  SOBEL_Y;
-    */
+
 
     tool = new ParallelConvolutionalTool(imagePixmap.width(),
                                          imagePixmap.height(),

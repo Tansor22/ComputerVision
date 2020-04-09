@@ -1,10 +1,15 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-const int ZEROS = 0;
-const int BORDER = 1;
-const int R = 1;
-const int G = 2;
-const int B = 4;
-const int A = 5;
+typedef int Canal;
+typedef int FillType;
+const FillType ZEROS = 0;
+const FillType ONES = 1;
+const FillType BORDER = 2;
+// anal must be the grade of 2!
+const Canal R = 1;
+const Canal G = 2;
+const Canal B = 4;
+const Canal A = 8;
+const Canal GRAY = 16;
 #endif // CONSTANTS_H

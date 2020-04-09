@@ -10,11 +10,12 @@ int* ParallelConvolutionalTool::process(int pixels[]) {
     //printAs2D(temp, tmpH, tmpW);
     double (*mapper)(int);
     mapper = Helper::normalizeStraight;
-    DataRetriver dr = DataRetriver(mapper);
-    tempCanals = dr.retriveData(temp, tmpW, tmpH, R | G | B | A);
+    Canal type = GRAY;
+    DataRetriver dr = DataRetriver(type, mapper);
+    tempCanals = dr.retriveData(temp, tmpW, tmpH);
     //printCanals(tempCanals, tmpH, tmpW);
 
-    canals = new double[w * h * 4];
+    canals = new double[w * h * 1];
     int* result = new int[w * h];
 
     const int cores = std::thread::hardware_concurrency();
@@ -24,7 +25,7 @@ int* ParallelConvolutionalTool::process(int pixels[]) {
     IPWorker *workers[cores];
     int workersI = 0;
     for (int i = 0; i <= (w * h) - batch; i += batch) {
-        IPWorker *worker = new IPWorker(this, i, i + batch, tempCanals, canals, result);
+        IPWorker *worker = new IPWorker(this, (GRAY & type ) == GRAY, i, i + batch, tempCanals, canals, result);
         workers[workersI++] = worker;
     }
     // start

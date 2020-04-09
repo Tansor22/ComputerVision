@@ -16,6 +16,7 @@ private:
 
     // logic
     ConvolutionalTool* tool;
+    Canal type;
     int from;
     int to;
     double *tempCanals;
@@ -26,12 +27,14 @@ public:
     explicit IPWorker(QObject *parent = 0) : QThread(parent) {};
     IPWorker(
             ConvolutionalTool* tool,
+            Canal type,
             int from,
             int to,
             double *tempCanals,
             double *canals,
             int *target
             ) {
+        this->type = type;
         this->from = from;
         this->to = to;
         this->tempCanals = tempCanals;
@@ -45,7 +48,7 @@ public:
     };
 
     void run() { greet();
-                 tool->applyKernel(from, to, tempCanals, canals, target);
+                 tool->applyKernel(type, from, to, tempCanals, canals, target);
                           bye();
                };
 

@@ -10,7 +10,7 @@ ConvolutionalTool::ConvolutionalTool(int w, int h, double *kernel, int kernelSiz
     tmpW = w + (2 * gap);
 }
 // generates temp canvas and sets edges according to fillType param
-int* ConvolutionalTool::setBounds(int fillType, int pixels[]){
+int* ConvolutionalTool::setBounds(FillType ft, int pixels[]){
     int tmpCols = w + (2 * gap);
     int tmpRows = h + (2 * gap);
     int tmpLength = tmpCols * tmpRows;
@@ -22,7 +22,7 @@ int* ConvolutionalTool::setBounds(int fillType, int pixels[]){
              << "TmpRows is " << tmpRows << '\n'
              << "TmpLength is " << tmpLength << '\n';
 
-    switch(fillType) {
+    switch(ft) {
     // blackbox
     case BORDER: {
         for (int y = 0; y < tmpLength / tmpCols; y++)
@@ -67,16 +67,18 @@ int* ConvolutionalTool::setBounds(int fillType, int pixels[]){
         break;
 
     }
+    case ONES:
     case ZEROS: {
         for (int y = 0; y < tmpLength / tmpCols; y++)
             for (int x = 0; x < tmpCols; x++) {
                 tmp[y * tmpCols + x] =
                         (x >= gap && x < w + gap && y >= gap && y < h + gap)
                         ? pixels[(y - gap) * w + (x - gap)]
-                        : 0;
+                        : ft;
             }
         break;
     }
+
     }
     return tmp;
 }
@@ -96,6 +98,7 @@ double ConvolutionalTool::clip(double num, double max, double min) {
     return num < min ? min : qMin(num, max);
 }
 void ConvolutionalTool::applyKernel(
+          bool gray,
         int from,
         int to,
         double *tempCanals,
@@ -105,9 +108,10 @@ void ConvolutionalTool::applyKernel(
     // auxiliary vars
     int k, x, y;
     int it;
+    int canalsCount = gray ? 1 : 4;
     double* values = new double[kernelSize * kernelSize];
     // each canal, order is R G B A, offset in canals array is w * h for each
-    for (int c = 0; c < 4; c++)
+    for (int c = 0; c < canalsCount; c++)
         // rows
         for (it = from; it < to; it++) {
             int tmpY = (it / w) + gap;
@@ -129,7 +133,9 @@ void ConvolutionalTool::applyKernel(
     // constructing result
     for (it = from; it < to; it++)
         target[it] =
-                qRgba(
+                gray
+                ? qGray( Helper::normalizeReverse(canals[it]))
+                : qRgba(
                     Helper::normalizeReverse(canals[it]), // RED
                     Helper::normalizeReverse(canals[it + w * h]), // GREEN
                 Helper::normalizeReverse(canals[it + w * h * 2]), // BLUE

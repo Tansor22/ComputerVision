@@ -15,7 +15,7 @@ public:
     double reduce(double* arr, int length);
     int clip(int num, int max, int min);
     double clip(double num, double max, double min);
-    void applyKernel(int from, int to, double *tempCanals, double *canals, int *target);
+    void applyKernel(bool gray, int from, int to, double *tempCanals, double *canals, int *target);
 protected:
     int kernelSize;
     double *kernel;
@@ -27,7 +27,7 @@ protected:
     int tmpW;
     double *tempCanals;
     double *canals;
-    int* setBounds(int filType, int pixels[]);
+    int* setBounds(FillType ft, int pixels[]);
 
 };
 
