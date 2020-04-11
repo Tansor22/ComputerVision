@@ -159,11 +159,11 @@ void ConvolutionalTool::applyKernel(
                 double xReduced = normalize(reduce(values, kernelSize * kernelSize), factor, bias);
                 double yReduced = normalize(reduce(yValues, kernelSize * kernelSize), factor, bias);
                 canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                        = /*clip(*/sqrt(xReduced * xReduced) + (yReduced * yReduced), 1.0, 0.0;
+                        = /*clip(*/sqrt(xReduced * xReduced) + (yReduced * yReduced);//, 1.0, 0.0);
             } else {
                 // reducing single
                 canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                        = clip(normalize(reduce(values, kernelSize * kernelSize), factor, bias), 1.0, 0.0);
+                        = /*clip(*/normalize(reduce(values, kernelSize * kernelSize), factor, bias);//, 1.0, 0.0);
             }
         }
     //printCanals(canals, h, w);

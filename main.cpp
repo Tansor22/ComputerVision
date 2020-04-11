@@ -10,8 +10,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainForm w;
     Sandbox* sb = new Sandbox(&w);
-    //sb->getImageViaFileDialog();
-    sb->getImageViaFileName(BUTTERFLY);
+    sb->getImageViaFileDialog();
+    //sb->getImageViaFileName(BUTTERFLY);
     int *result = sb->sobelOperator();
     sb->write(result);
     return a.exec();

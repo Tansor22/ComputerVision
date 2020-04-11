@@ -93,9 +93,9 @@ int* Sandbox::increaseSharpness() {
 }
 int* Sandbox::sobelOperator() {
     double SOBEL_X[] =  {
-        -1.0, 0, 1.0,
-        -2.0, 0, 2.0,
-        -1.0, 0, 1.0
+        1.0, 0, -1.0,
+        2.0, 0, -2.0,
+        1.0, 0, -1.0
     };
     double SOBEL_Y[] =  {
         1.0, 2.0, 1.0,
@@ -107,11 +107,11 @@ int* Sandbox::sobelOperator() {
                                                             imagePixmap.height(),
                                                             SOBEL_X,
                                                             size,
-                                                            SOBEL_Y);
+                                                           SOBEL_Y);
     DataRetriver dr = DataRetriver(NULL);
 
     int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, R | G | B, data);
+    int * result = tool->process(BORDER, GRAY, data);
     show(result);
 
     return result;
