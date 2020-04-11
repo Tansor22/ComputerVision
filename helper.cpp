@@ -6,6 +6,46 @@ double Helper::normalizeStraight(int rgb) {
 int Helper::normalizeReverse(double normalized) {
     return (int) (normalized * 255.0);
 }
+double* Helper::sample(int from, int to, double *data) {
+    // non negative
+    assert(from >= 0 && to >= 0);
+    int size = to - from;
+    // to is greater than from
+    assert(size > 0);
+    double* sample = new double[size];
+    for (int i = from; i < to; i++)
+        sample[i] = data[i];
+    return sample;
+}
+double* Helper::sample(int sampleSize, double *data, int srcSize) {
+    // 0 .. (srcSize - sampleSize)
+    int from = rand() & (srcSize - sampleSize);
+    int to = from + sampleSize;
+    return sample(from, to, data);
+}
+void Helper::printSample(int from, int to, double *data) {
+    double* toPrint = sample(from, to, data);
+    std::string str = "";
+    int elems = 0;
+
+    for (int i = 0; i < to - from; i++) {
+        str += std::to_string(toPrint[i]) + " ";
+        if (++elems > ELEMS_IN_LINE) { str += "\t\n"; elems = 0;};
+    }
+    qDebug() << str.c_str() << endl;
+}
+void Helper::printSample(int sampleSize, double *data, int srcSize) {
+    double* toPrint = sample(sampleSize, data, srcSize);
+    std::string str = "";
+    int elems = 0;
+
+    for (int i = 0; i < sampleSize; i++) {
+        str += std::to_string(toPrint[i]) + " ";
+        if (++elems > ELEMS_IN_LINE) { str += "\t\n"; elems = 0;};
+    }
+    qDebug() << str.c_str() << endl;
+}
+
 double* Helper::gauss(double sigma) {
     int size = floor(3 * sigma);
     double *matrix_gauss = new double[size * size];
@@ -40,8 +80,6 @@ void Helper::printAs2D(double *arr, int rows, int columns) {
         str += "\t\n";
 
     }
-    double check = arr[rows * columns - 1];
-    // int s = 0;
     qDebug() << str.c_str() << endl;
 }
 void Helper::printCanals(int *arr, int rows, int columns) {

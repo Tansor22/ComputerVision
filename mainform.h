@@ -6,6 +6,7 @@
 #include "convolutionaltool.h"
 #include <QGraphicsScene>
 #include <QWidget>
+#include <QDesktopWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainForm; }
@@ -19,11 +20,7 @@ public:
     MainForm(QWidget *parent = nullptr);
     ~MainForm();
     QGraphicsScene *scene;
-    void setup();
-    void setupGUI();
-    QString fileName;
-    QPixmap imagePixmap;
-    ConvolutionalTool *tool;
+    void prepareScene();
 
 private:
     Ui::MainForm *ui;

@@ -1,6 +1,7 @@
 #ifndef DATARETRIVER_H
 #include <QPixmap>
 #include <QImage>
+#include <QtDebug>
 #include <constants.h>
 #define DATARETRIVER_H
 
@@ -21,7 +22,7 @@ public:
     int* retriveData(QImage qi);
     int* retriveData(QPixmap qp);
     // normalizes pixels
-    void normalizeExtra(double* data);
+    void normalizeExtra(int size, double* data);
 
 };
 

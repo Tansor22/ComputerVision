@@ -25,33 +25,8 @@ private:
 
 public:
     explicit IPWorker(QObject *parent = 0) : QThread(parent) {};
-    IPWorker(
-            ConvolutionalTool* tool,
-            Canal type,
-            int from,
-            int to,
-            double *tempCanals,
-            double *canals,
-            int *target
-            ) {
-        this->type = type;
-        this->from = from;
-        this->to = to;
-        this->tempCanals = tempCanals;
-        this->canals = canals;
-        this->target = target;
-        this->tool = tool;
-        // looks very unrealiable
-        static int id = 0;
-        uid = id++;
-        name = QString("IPWorker#%1").arg(uid);
-    };
-
-    void run() { greet();
-                 tool->applyKernel(type, from, to, tempCanals, canals, target);
-                          bye();
-               };
-
+    IPWorker(ConvolutionalTool* tool, Canal type, int from, int to, double *tempCanals, double *canals, int *target);
+    void run();
     void greet() {qDebug() << "Hello, my name is " << name << endl; }
     void bye() {qDebug() << "Bye, this has been " << name << endl; }
 

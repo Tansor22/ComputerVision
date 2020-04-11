@@ -13,7 +13,7 @@ class ParallelConvolutionalTool : public ConvolutionalTool
 {
 public:
     ParallelConvolutionalTool(int w, int h, double *kernel, int kernelSize);
-    virtual int *process(int pixels[]);
+    virtual int *process(FillType ft, Canal type, int* pixels);
 };
 
 #endif // PARALLELCONVOLUTIONALTOOL_H

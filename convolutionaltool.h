@@ -10,12 +10,16 @@ class ConvolutionalTool
 {
 public:
     ConvolutionalTool(int w, int h, double *kernel, int kernelSize);
-    virtual ~ConvolutionalTool() { }
-    virtual int* process(int pixels[]) = 0;
+    virtual ~ConvolutionalTool() { delete tempCanals; delete canals;}
+    virtual int* process(FillType ft, Canal type, int* pixels) = 0;
+    void prepare(FillType ft, Canal type, int* pixels);
     double reduce(double* arr, int length);
+    double normalize(double value, double factor, int bias);
     int clip(int num, int max, int min);
     double clip(double num, double max, double min);
-    void applyKernel(bool gray, int from, int to, double *tempCanals, double *canals, int *target);
+    void applyKernel(bool gray, int from, int to, double *tempCanals, double *canals, int *target,
+                     double factor = 1.0,
+                     int bias = 0);
 protected:
     int kernelSize;
     double *kernel;

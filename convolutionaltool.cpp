@@ -83,6 +83,23 @@ int* ConvolutionalTool::setBounds(FillType ft, int pixels[]){
     return tmp;
 }
 
+void ConvolutionalTool::prepare(FillType ft, Canal type, int *pixels) {
+    int *temp = setBounds(ft, pixels);
+    //printAs2D(temp, tmpH, tmpW);
+    double (*mapper)(int);
+    mapper = Helper::normalizeStraight;
+
+    DataRetriver dr = DataRetriver(type, mapper);
+    tempCanals = dr.retriveData(temp, tmpW, tmpH);
+    //Helper::printSample(0, 20, tempCanals);
+    // now it is ok
+    dr.normalizeExtra(tmpW * tmpH, tempCanals);
+    //printCanals(tempCanals, tmpH, tmpW);
+
+    int canalsCount = Helper::isGray(type) ? 1 : 4;
+
+    canals = new double[w * h * canalsCount];
+}
 // sum
 double ConvolutionalTool::reduce(double* arr, int length) {
     double sum = 0.0;
@@ -97,14 +114,19 @@ int ConvolutionalTool::clip(int num, int max, int min) {
 double ConvolutionalTool::clip(double num, double max, double min) {
     return num < min ? min : qMin(num, max);
 }
+double ConvolutionalTool::normalize(double value, double factor, int bias) {
+    return factor * value + bias;
+}
 void ConvolutionalTool::applyKernel(
-          bool gray,
+        bool gray,
         int from,
         int to,
         double *tempCanals,
         double *canals,
-        int *target
-       ) {
+        int *target,
+        double factor,
+        int bias
+        ) {
     // auxiliary vars
     int k, x, y;
     int it;
@@ -127,7 +149,7 @@ void ConvolutionalTool::applyKernel(
 
             // reducing
             canals[tmpX - convGap + (tmpY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                    = clip(reduce(values, kernelSize * kernelSize), 1.0, 0.0);
+                    = clip(normalize(reduce(values, kernelSize * kernelSize), factor, bias), 1.0, 0.0);
         }
     //printCanals(canals, h, w);
     // constructing result
@@ -136,8 +158,8 @@ void ConvolutionalTool::applyKernel(
                 gray
                 ? qGray( Helper::normalizeReverse(canals[it]))
                 : qRgba(
-                    Helper::normalizeReverse(canals[it]), // RED
-                    Helper::normalizeReverse(canals[it + w * h]), // GREEN
+                      Helper::normalizeReverse(canals[it]), // RED
+                      Helper::normalizeReverse(canals[it + w * h]), // GREEN
                 Helper::normalizeReverse(canals[it + w * h * 2]), // BLUE
                 Helper::normalizeReverse(canals[it + w * h * 3])); // ALPHA
 };

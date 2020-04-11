@@ -23,6 +23,7 @@ SOURCES += \
     main.cpp \
     mainform.cpp \
     parallelconvolutionaltool.cpp \
+    sandbox.cpp \
     sequentialconvolutionaltool.cpp
 
 HEADERS += \
@@ -33,6 +34,7 @@ HEADERS += \
     ipworker.h \
     mainform.h \
     parallelconvolutionaltool.h \
+    sandbox.h \
     sequentialconvolutionaltool.h
 
 FORMS += \

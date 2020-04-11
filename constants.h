@@ -6,7 +6,7 @@ typedef int FillType;
 const FillType ZEROS = 0;
 const FillType ONES = 1;
 const FillType BORDER = 2;
-// anal must be the grade of 2!
+// Canal must be the grade of 2!
 const Canal R = 1;
 const Canal G = 2;
 const Canal B = 4;
