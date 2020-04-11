@@ -18,6 +18,7 @@ public:
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);
     static bool isGray(Canal type) {return (GRAY & type ) == GRAY; }
+    static bool noAlpha(Canal type) {return (A & type ) != A; }
     static double* sample(int from, int to, double* data);
     static double* sample(int sampleSize, double* data, int srcSize);
 };

@@ -2,9 +2,6 @@
 #include "helper.h"
 #include "parallelconvolutionaltool.h"
 
-ParallelConvolutionalTool::ParallelConvolutionalTool(int w, int h, double *kernel, int kernelSize)
-    : ConvolutionalTool(w, h, kernel, kernelSize) {}
-
 int* ParallelConvolutionalTool::process(FillType ft, Canal type, int* pixels) {
     prepare(ft, type, pixels);
 
@@ -17,7 +14,7 @@ int* ParallelConvolutionalTool::process(FillType ft, Canal type, int* pixels) {
     IPWorker *workers[cores];
     int workersI = 0;
     for (int i = 0; i <= (w * h) - batch; i += batch) {
-        IPWorker *worker = new IPWorker(this, Helper::isGray(type), i, i + batch, tempCanals, canals, result);
+        IPWorker *worker = new IPWorker(this, type, i, i + batch, tempCanals, canals, result);
         workers[workersI++] = worker;
     }
     // start

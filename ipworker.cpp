@@ -22,7 +22,7 @@ IPWorker::IPWorker( ConvolutionalTool* tool,
 
 void IPWorker::run() {
     greet();
-    tool->applyKernel(Helper::isGray(type), from, to, tempCanals, canals, target);
+    tool->applyKernel(type, from, to, tempCanals, canals, target);
     bye();
 }
 

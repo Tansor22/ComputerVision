@@ -1,11 +1,11 @@
 #include "convolutionaltool.h"
 
-ConvolutionalTool::ConvolutionalTool(int w, int h, double *kernel, int kernelSize) {
-    this->kernel = kernel; this->kernelSize = kernelSize;
+ConvolutionalTool::ConvolutionalTool(int w, int h, double *kernel, int kernelSize, double *yKernel)
+    : kernelSize(kernelSize), kernel(kernel), yKernel(yKernel){
     gap = (kernelSize / 2);
     convGap = (kernelSize / 2);
-    this->h = h; this->w = w;
-
+    this->h = h;
+    this->w = w;
     tmpH = h + (2 * gap);
     tmpW = w + (2 * gap);
 }
@@ -96,7 +96,7 @@ void ConvolutionalTool::prepare(FillType ft, Canal type, int *pixels) {
     dr.normalizeExtra(tmpW * tmpH, tempCanals);
     //printCanals(tempCanals, tmpH, tmpW);
 
-    int canalsCount = Helper::isGray(type) ? 1 : 4;
+    int canalsCount = Helper::isGray(type) ? 1 : Helper::noAlpha(type) ? 3 : 4;
 
     canals = new double[w * h * canalsCount];
 }
@@ -118,7 +118,7 @@ double ConvolutionalTool::normalize(double value, double factor, int bias) {
     return factor * value + bias;
 }
 void ConvolutionalTool::applyKernel(
-        bool gray,
+        Canal type,
         int from,
         int to,
         double *tempCanals,
@@ -130,36 +130,51 @@ void ConvolutionalTool::applyKernel(
     // auxiliary vars
     int k, x, y;
     int it;
-    int canalsCount = gray ? 1 : 4;
+    int canalsCount = Helper::isGray(type) ? 1 : Helper::noAlpha(type) ? 3 : 4;
     double* values = new double[kernelSize * kernelSize];
+    double* yValues;
+    // x and y matrix available
+    if (yKernel) {
+        yValues = new double[kernelSize * kernelSize];
+    }
     // each canal, order is R G B A, offset in canals array is w * h for each
+    // sequantial processing of all canals!!!
     for (int c = 0; c < canalsCount; c++)
         // rows
         for (it = from; it < to; it++) {
-            int tmpY = (it / w) + gap;
-            int tmpX = it % w + gap;
+            int offsetY = (it / w) + gap;
+            int offsetX = it % w + gap;
             k = 0;
             // convolutional
             for (int i = 0; i < kernelSize; i++)
                 for (int j = 0; j < kernelSize; j++) {
-                    x = tmpX + j - convGap;
-                    y = tmpY + i - convGap;
-                    values[k++] = tempCanals[y * tmpW + x + (tmpW * tmpH * c)] * kernel[i * kernelSize + j];
+                    x = offsetX + j - convGap;
+                    y = offsetY + i - convGap;
+                    values[k] = tempCanals[y * tmpW + x + (tmpW * tmpH * c)] * kernel[i * kernelSize + j];
+                    if (yKernel) yValues[k] = tempCanals[y * tmpW + x + (tmpW * tmpH * c)] * yKernel[i * kernelSize + j];
+                    k++;
                 }
-
-            // reducing
-            canals[tmpX - convGap + (tmpY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                    = clip(normalize(reduce(values, kernelSize * kernelSize), factor, bias), 1.0, 0.0);
+            if (yKernel) {
+                // reducing x and y
+                double xReduced = normalize(reduce(values, kernelSize * kernelSize), factor, bias);
+                double yReduced = normalize(reduce(yValues, kernelSize * kernelSize), factor, bias);
+                canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
+                        = clip(sqrt(xReduced * xReduced) + (yReduced * yReduced), 1.0, 0.0);
+            } else {
+                // reducing single
+                canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
+                        = clip(normalize(reduce(values, kernelSize * kernelSize), factor, bias), 1.0, 0.0);
+            }
         }
     //printCanals(canals, h, w);
     // constructing result
     for (it = from; it < to; it++)
         target[it] =
-                gray
-                ? qGray( Helper::normalizeReverse(canals[it]))
+                Helper::isGray(type)
+                ? qRgb(Helper::normalizeReverse(canals[it]), Helper::normalizeReverse(canals[it]), Helper::normalizeReverse(canals[it]))
                 : qRgba(
                       Helper::normalizeReverse(canals[it]), // RED
                       Helper::normalizeReverse(canals[it + w * h]), // GREEN
                 Helper::normalizeReverse(canals[it + w * h * 2]), // BLUE
-                Helper::normalizeReverse(canals[it + w * h * 3])); // ALPHA
+                Helper::noAlpha(type) ? 255 : Helper::normalizeReverse(canals[it + w * h * 3])); // ALPHA
 };

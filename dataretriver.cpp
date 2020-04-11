@@ -119,7 +119,10 @@ double* DataRetriver::retriveData(int* arr, int w, int h) {
         if ((R & canals ) == R) coef++;
         if ((G & canals ) == G) coef++;
         if ((B & canals ) == B) coef++;
-        if ((A & canals ) == A) coef++;
+        //if ((A & canals ) == A) coef++;
+        // for alpha
+        coef++;
+
     }
 
     double* data = new double[w * h * coef];
@@ -140,6 +143,7 @@ double* DataRetriver::retriveData(int* arr, int w, int h) {
                 data[(i * w + j) + w * h * canalI++] = map(qBlue(rgb));
             if ((A & canals ) == A)
                 data[(i * w + j) + w * h * canalI] = map(qAlpha(rgb));
+             else data[(i * w + j) + w * h * canalI] = map(255);
 
             // reset canal
             canalI = 0;

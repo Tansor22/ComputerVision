@@ -2,15 +2,17 @@
 #include <sandbox.h>
 #include <QApplication>
 
-const QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
+const QString BUTTERFLY = "C:/Users/Sergei/Documents/QtProjects/images/butterfly.jpg";
+const QString CAPPED_GIRL = "C:/Users/Sergei/Documents/QtProjects/images/2.jpg";
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainForm w;
     Sandbox* sb = new Sandbox(&w);
-    sb->getImageViaFileDialog();
-    int *result = sb->gaussianFilter();
+    //sb->getImageViaFileDialog();
+    sb->getImageViaFileName(BUTTERFLY);
+    int *result = sb->sobelOperator();
     sb->write(result);
     return a.exec();
 }

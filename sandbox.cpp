@@ -14,6 +14,10 @@ void Sandbox::show(int *pixels) {
     }
     form->showMaximized();
 }
+void Sandbox::getImageViaFileName(QString fileName)  {
+    this->fileName = fileName;
+    imagePixmap.load(fileName);
+}
 void Sandbox::getImageViaFileDialog() {
 
     fileName = QFileDialog::
@@ -33,6 +37,21 @@ void Sandbox::write(int *pixels) {
     image.save(&file, "PNG");
 }
 
+int* Sandbox::grayscaled() {
+    DataRetriver dr = DataRetriver(NULL);
+
+    int* data = dr.retriveData(imagePixmap);
+    // such a retriver returns single channel(gray) 0..255 (no mapper) as double
+    dr = DataRetriver(GRAY);
+    double* grayscaled = dr.retriveData(data,imagePixmap.width(), imagePixmap.height());
+    int size = imagePixmap.width() * imagePixmap.height();
+    data = new int[size];
+    for (int i = 0; i < size; i ++)
+        data[i] = qRgb(grayscaled[i], grayscaled[i], grayscaled[i]);
+
+    show(data);
+    return data;
+}
 int* Sandbox::gaussianFilter() {
     double sigma = 7;
     int size = floor(3 * sigma);
@@ -74,16 +93,26 @@ int* Sandbox::increaseSharpness() {
 }
 int* Sandbox::sobelOperator() {
     double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
+        -1.0, 0, 1.0,
+        -2.0, 0, 2.0,
+        -1.0, 0, 1.0
     };
     double SOBEL_Y[] =  {
         1.0, 2.0, 1.0,
         0.0, 0.0, 0.0,
         -1.0, -2.0, -1.0
     };
-    int * result = 0;
+    int size = 3;
+    ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
+                                                            imagePixmap.height(),
+                                                            SOBEL_X,
+                                                            size,
+                                                            SOBEL_Y);
+    DataRetriver dr = DataRetriver(NULL);
+
+    int* data = dr.retriveData(imagePixmap);
+    int * result = tool->process(BORDER, GRAY, data);
+    show(result);
 
     return result;
 }
