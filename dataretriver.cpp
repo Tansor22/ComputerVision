@@ -9,6 +9,7 @@ void DataRetriver::normalizeExtra(int size, double* data) {
     // gray
     double max;
     double min;
+
     if ((GRAY & canals ) == GRAY)  {
         max = data[0];
         min = data[0];
@@ -78,7 +79,7 @@ void DataRetriver::normalizeExtra(int size, double* data) {
     }
 
     // normalizing
-    for (i = 0; i < size; i++) {
+    for (i = 1; i < size; i++) {
         // GRAYSCALED IMAGE
         if ((GRAY & canals ) == GRAY)  {
             // (val - min) * ((globalMax - globalMin) / (max - min)) + globalMin;

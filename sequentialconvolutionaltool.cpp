@@ -9,6 +9,6 @@ int* SequentialConvolutionalTool::process(FillType ft, Canal type, int* pixels) 
     prepare(ft, type, pixels);
     // result pixels
     int* result = new int[w * h];
-    applyKernel(Helper::isGray(type), 0, w * h, tempCanals, canals, result);
+    applyKernel(type, 0, w * h, tempCanals, canals, result);
     return result;
 }

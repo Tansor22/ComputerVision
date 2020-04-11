@@ -103,7 +103,7 @@ int* Sandbox::sobelOperator() {
         -1.0, -2.0, -1.0
     };
     int size = 3;
-    ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
+    ConvolutionalTool* tool = new SequentialConvolutionalTool(imagePixmap.width(),
                                                             imagePixmap.height(),
                                                             SOBEL_X,
                                                             size,
@@ -111,7 +111,7 @@ int* Sandbox::sobelOperator() {
     DataRetriver dr = DataRetriver(NULL);
 
     int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, GRAY, data);
+    int * result = tool->process(BORDER, R | G | B, data);
     show(result);
 
     return result;

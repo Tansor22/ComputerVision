@@ -93,7 +93,7 @@ void ConvolutionalTool::prepare(FillType ft, Canal type, int *pixels) {
     tempCanals = dr.retriveData(temp, tmpW, tmpH);
     //Helper::printSample(0, 20, tempCanals);
     // now it is ok
-    dr.normalizeExtra(tmpW * tmpH, tempCanals);
+    // dr.normalizeExtra(tmpW * tmpH, tempCanals);
     //printCanals(tempCanals, tmpH, tmpW);
 
     int canalsCount = Helper::isGray(type) ? 1 : Helper::noAlpha(type) ? 3 : 4;
@@ -159,7 +159,7 @@ void ConvolutionalTool::applyKernel(
                 double xReduced = normalize(reduce(values, kernelSize * kernelSize), factor, bias);
                 double yReduced = normalize(reduce(yValues, kernelSize * kernelSize), factor, bias);
                 canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                        = clip(sqrt(xReduced * xReduced) + (yReduced * yReduced), 1.0, 0.0);
+                        = /*clip(*/sqrt(xReduced * xReduced) + (yReduced * yReduced), 1.0, 0.0;
             } else {
                 // reducing single
                 canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
@@ -168,6 +168,11 @@ void ConvolutionalTool::applyKernel(
         }
     //printCanals(canals, h, w);
     // constructing result
+
+    // TODO: for sobel specified
+    DataRetriver dr = DataRetriver(GRAY);
+    dr.normalizeExtra(to - from, canals);
+    // TODO: for sobel specified
     for (it = from; it < to; it++)
         target[it] =
                 Helper::isGray(type)
