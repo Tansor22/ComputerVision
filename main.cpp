@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     Sandbox* sb = new Sandbox(&w);
     sb->getImageViaFileDialog();
     //sb->getImageViaFileName(BUTTERFLY);
-    int *result = sb->sobelOperator();
+    int *result = sb->moravek(5, 800);//sb->moravek(5, 10);
     sb->write(result);
     return a.exec();
 }

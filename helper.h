@@ -1,6 +1,7 @@
 #ifndef HELPER_H
 #include <constants.h>
 #include <math.h>
+#include <QPixmap>
 #include <QDebug>
 #define HELPER_H
 
@@ -14,7 +15,9 @@ public:
     static void printSample(int from, int to, double* data);
     static void printSample(int sampleSize, double* data, int srcSize);
     static void printCanals(int *arr, int rows, int columns);
+    static double* copyOf(double* arr, int size);
     static double normalizeStraight(int rgb);
+    static int* toIntRGB(Canal type, double* data, int size);
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);
     static bool isGray(Canal type) {return (GRAY & type ) == GRAY; }

@@ -70,6 +70,22 @@ double* Helper::gauss(double sigma) {
     Helper::printAs2D(matrix_gauss, size, size);
     return matrix_gauss;
 }
+
+int* Helper::toIntRGB(Canal type, double *data, int size) {
+    int* output = new int[size];
+    for (int i = 0; i < size; i++)
+        output[i] =
+                isGray(type)
+                ? qRgb(normalizeReverse(data[i]),
+                       normalizeReverse(data[i]),
+                       normalizeReverse(data[i]))
+                : qRgba(
+                      normalizeReverse(data[i]), // RED
+                      normalizeReverse(data[i + size]), // GREEN
+                normalizeReverse(data[i + size * 2]), // BLUE
+                noAlpha(type) ? 255 : normalizeReverse(data[i + size * 3])); // ALPHA
+    return output;
+}
 void Helper::printAs2D(double *arr, int rows, int columns) {
     std::string str = "";
     for (int i = 0; i < rows; i++) {
@@ -81,6 +97,11 @@ void Helper::printAs2D(double *arr, int rows, int columns) {
 
     }
     qDebug() << str.c_str() << endl;
+}
+double* Helper::copyOf(double *arr, int size) {
+    double* output = new double[size];
+    for (int i = 0; i < size; i++) output[i] = arr[i];
+    return output;
 }
 void Helper::printCanals(int *arr, int rows, int columns) {
     std::string str = "";

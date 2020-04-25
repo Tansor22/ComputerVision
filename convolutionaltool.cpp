@@ -1,11 +1,16 @@
 #include "convolutionaltool.h"
 
-ConvolutionalTool::ConvolutionalTool(int w, int h, double *kernel, int kernelSize, double *yKernel)
-    : kernelSize(kernelSize), kernel(kernel), yKernel(yKernel){
-    gap = (kernelSize / 2);
-    convGap = (kernelSize / 2);
+ConvolutionalTool::ConvolutionalTool(int w, int h, double *kernel, int kernelSize, double *yKernel) {
     this->h = h;
     this->w = w;
+    recharge(kernel, kernelSize, yKernel);
+}
+void ConvolutionalTool::recharge(double *kernel, int kernelSize, double *yKernel) {
+    this->kernel = kernel;
+    this->kernelSize = kernelSize;
+    this->yKernel = yKernel;
+    gap = (kernelSize / 2);
+    convGap = (kernelSize / 2);
     tmpH = h + (2 * gap);
     tmpW = w + (2 * gap);
 }
@@ -154,25 +159,32 @@ void ConvolutionalTool::applyKernel(
                     if (yKernel) yValues[k] = tempCanals[y * tmpW + x + (tmpW * tmpH * c)] * yKernel[i * kernelSize + j];
                     k++;
                 }
+            double toSet;
             if (yKernel) {
                 // reducing x and y
                 double xReduced = normalize(reduce(values, kernelSize * kernelSize), factor, bias);
                 double yReduced = normalize(reduce(yValues, kernelSize * kernelSize), factor, bias);
-                canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                        = /*clip(*/sqrt(xReduced * xReduced) + (yReduced * yReduced);//, 1.0, 0.0);
+                double calculated = sqrt(xReduced * xReduced) + (yReduced * yReduced);
+                toSet = sobel
+                        ? calculated // no need to cut
+                        : clip(calculated, 1.0, 0.0);
             } else {
                 // reducing single
-                canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
-                        = /*clip(*/normalize(reduce(values, kernelSize * kernelSize), factor, bias);//, 1.0, 0.0);
+                double reduced = reduce(values, kernelSize * kernelSize);
+                toSet = sobel
+                        ? normalize(reduced, factor, bias) // no need to cut
+                        : clip(normalize(reduced, factor, bias), 1.0, 0.0);
             }
+            canals[offsetX - convGap + (offsetY - convGap) * (tmpW - 2 * convGap) + h * w * c]
+                    = toSet;
         }
     //printCanals(canals, h, w);
     // constructing result
 
-    // TODO: for sobel specified
-    DataRetriver dr = DataRetriver(GRAY);
-    dr.normalizeExtra(to - from, canals);
-    // TODO: for sobel specified
+    if (sobel) {
+        DataRetriver dr = DataRetriver(GRAY);
+        dr.normalizeExtra(to - from, canals);
+    }
     for (it = from; it < to; it++)
         target[it] =
                 Helper::isGray(type)

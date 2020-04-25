@@ -19,10 +19,12 @@ SOURCES += \
     convolutionaltool.cpp \
     dataretriver.cpp \
     helper.cpp \
+    imagetoprocess.cpp \
     ipworker.cpp \
     main.cpp \
     mainform.cpp \
     parallelconvolutionaltool.cpp \
+    pointofinterest.cpp \
     sandbox.cpp \
     sequentialconvolutionaltool.cpp
 
@@ -31,9 +33,11 @@ HEADERS += \
     convolutionaltool.h \
     dataretriver.h \
     helper.h \
+    imagetoprocess.h \
     ipworker.h \
     mainform.h \
     parallelconvolutionaltool.h \
+    pointofinterest.h \
     sandbox.h \
     sequentialconvolutionaltool.h
 
