@@ -1,6 +1,8 @@
 #include "imagetoprocess.h"
 #include "sandbox.h"
 
+#include <QApplication>
+
 void Sandbox::show(int *pixels) {
     if (showResults) {
         if (pixels == 0) {
@@ -354,12 +356,16 @@ int* Sandbox::moravek(int winSize, int nPoints) {
     show(result);
     return result;
 }
-int* Sandbox::pyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
+void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
     double k = pow(2.0, 1.0 / (nLevels - 1)); // interval
     double sigmaB = sqrt(sigma0 * sigma0 - sigmaA * sigmaA);
+    int w = imagePixmap.width();
+    int h = imagePixmap.height();
     // do not display gauss
     setShowResultsFlagTo(false);
     int* blured = gaussBlurRGB(sigmaB);
+    ImageToProcess toProcess = ImageToProcess();
+    toProcess.setDoubles(R | G | B, tool->getCanals(), w, h);
 
     double sigma[nLevels - 1];
     double sigmaOld = sigma0;
@@ -368,7 +374,44 @@ int* Sandbox::pyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
         sigma[i] = sqrt(sigmaNew * sigmaNew - sigmaOld * sigmaOld);
         sigmaOld = sigmaNew;
     }
+    // getting rid of old pyramid
+    foreach (Octave* octave, pyramid)  delete octave;
+    pyramid.clear();
 
-    setShowResultsFlagTo(true);
+    double sigmaEff = sigma0;
+    QList <Pyramid*> *oneOctave;  // single octave
+    Pyramid *currentLayer;
 
+    for(int i = 0; i < nOctaves; i++){
+        oneOctave = new QList <Pyramid*>();   //создаем новую октаву
+        double sigmaLocal = sigma0;
+
+        currentLayer = new Pyramid(&toProcess, i, 0);
+        currentLayer->setSigmaLocal(sigmaLocal);
+        currentLayer->setSigmaEffective(sigmaEff);
+        oneOctave->append(currentLayer);
+
+        for (int j = 1; j < nLevels; j++){
+            gaussBlurRGB(sigma[j - 1]);
+            sigmaLocal *= k;
+            sigmaEff *= k;
+            currentLayer = new Pyramid(&toProcess, i, j);
+            currentLayer->setSigmaLocal(sigmaLocal);
+            currentLayer->setSigmaEffective(sigmaEff);
+            oneOctave->append(currentLayer);
+        }
+        pyramid.append(new Octave(oneOctave, i));
+
+        if (i < nOctaves - 1)
+            toProcess.downsample(); // shrinken image
+    }
+
+    // writting to hard disk
+    foreach (Octave *octave, pyramid)
+        foreach (Pyramid *layer, *octave->getLayers()) {
+            QString path = QApplication::applicationDirPath() + "/Input/Pyramid/pyramid"
+                    + QString::number(layer->getOctaves() + 1) + "-"  + QString::number(layer->getLayers() + 1);
+
+            write(*layer->getImage(), path);
+        }
 }

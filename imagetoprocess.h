@@ -21,6 +21,7 @@ public:
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);
     static QList<PointOfInterest> getPOIs(ImageToProcess* img, int winSize, bool isHarris = false);
     QList<PointOfInterest> filterPOIs(QList<PointOfInterest> pointsIn, int count);
+    void downsample();
     static QList<PointOfInterest> filterPOIs(int w, int h, QList<PointOfInterest> pointsIn, int count);
 
     // vars

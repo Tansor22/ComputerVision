@@ -4,6 +4,8 @@
 #include <QFileDialog>
 #include <pointofinterest.h>
 #include <imagetoprocess.h>
+#include <octave.h>
+#include <pyramid.h>
 #define SANDBOX_H
 
 
@@ -33,11 +35,12 @@ public:
     int* sobelV2();
     int* moravek(int winSize, int nPoints);
     int* harris(int winSize, int nPoints);
-    int* pyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
+    void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
     void setShowResultsFlagTo(bool value) {showResults = value;}
     ConvolutionalTool* tool;
 private:
     bool showResults = true;
+    QList<Octave*> pyramid;
 };
 
 #endif // SANDBOX_H

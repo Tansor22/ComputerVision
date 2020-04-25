@@ -36,8 +36,10 @@ HEADERS += \
     imagetoprocess.h \
     ipworker.h \
     mainform.h \
+    octave.h \
     parallelconvolutionaltool.h \
     pointofinterest.h \
+    pyramid.h \
     sandbox.h \
     sequentialconvolutionaltool.h
 

@@ -29,7 +29,7 @@ double ImageToProcess::getValueSafe(int x, int y) {
 }
 
 void ImageToProcess::setValueSafe(int x, int y, double value) {
-      // coorect out of bound
+    // coorect out of bound
     if (x >= 0 && x < w && y > 0 && y < h){
         doubleData[y * w + x] = value;
     }
@@ -107,18 +107,47 @@ QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInt
     // while the amount of points is sufficient and radius is ok
     while (points.size() > count && r < w / 2 && r < h / 2) {
         points.erase(std::remove_if(points.begin(), points.end(),
-            [&](const PointOfInterest& curPoint) {
-                for (const PointOfInterest& point : points) {
-                    double dst = PointOfInterest::distance(point, curPoint);
-                    // points quite close and the second one is more powerfull
-                    if (dst < r && curPoint.getC() < point.getC()) {
-                        return true;
-                    }
+                                    [&](const PointOfInterest& curPoint) {
+            for (const PointOfInterest& point : points) {
+                double dst = PointOfInterest::distance(point, curPoint);
+                // points quite close and the second one is more powerfull
+                if (dst < r && curPoint.getC() < point.getC()) {
+                    return true;
                 }
-                return false;
-            }), points.end());
+            }
+            return false;
+        }), points.end());
         r++;
     }
     return points;
+}
+
+void ImageToProcess::downsample() {
+    // only for rgb
+    if (Helper::isGray(type))
+        return;
+
+    int nCanals = Helper::noAlpha(type) ? 3 : 4;
+
+    int oldW = w;
+    int oldH = h;
+    w = w / 2;
+    h = h / 2;
+    int size = w * h;
+    int oldSize = oldW * oldH;
+
+
+    double * oldDoubleData = Helper::copyOf(doubleData, size);
+
+    doubleData = new double[size];
+
+    for (int i = 0; i < h; i++)
+        for (int j = 0; j < w; j++)
+            for (int c = 0; c < nCanals; c++)
+                // seems spooky, doesn't it?
+                doubleData[i * w + j + size * c] = oldDoubleData[i * 2 * oldW + j * 2 + oldSize * c];
+
+    delete [] oldDoubleData;
+
 }
 
