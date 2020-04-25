@@ -97,8 +97,6 @@ void ConvolutionalTool::prepare(FillType ft, Canal type, int *pixels) {
     DataRetriver dr = DataRetriver(type, mapper);
     tempCanals = dr.retriveData(temp, tmpW, tmpH);
     //Helper::printSample(0, 20, tempCanals);
-    // now it is ok
-    // dr.normalizeExtra(tmpW * tmpH, tempCanals);
     //printCanals(tempCanals, tmpH, tmpW);
 
     int canalsCount = Helper::isGray(type) ? 1 : Helper::noAlpha(type) ? 3 : 4;

@@ -17,14 +17,15 @@ public:
     double shiftError(int winSize, int x, int y, int dx, int dy);
     double getValueSafe(int x, int y);
     void setValueSafe(int x, int y, double value);
-    void setDoubles(double* doubleData, int w, int h);
+    void setDoubles(Canal type, double* doubleData, int w, int h);
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);
     static QList<PointOfInterest> getPOIs(ImageToProcess* img, int winSize, bool isHarris = false);
     QList<PointOfInterest> filterPOIs(QList<PointOfInterest> pointsIn, int count);
-    static QList<PointOfInterest> filterPOIs(ImageToProcess* img, QList<PointOfInterest> pointsIn, int count);
+    static QList<PointOfInterest> filterPOIs(int w, int h, QList<PointOfInterest> pointsIn, int count);
 
     // vars
     double* doubleData;
+    Canal type;
     int w;
     int h;
 

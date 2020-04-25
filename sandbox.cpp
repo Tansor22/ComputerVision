@@ -28,14 +28,17 @@ void Sandbox::getImageViaFileDialog() {
                             "Open Image", IMAGES_PATH, "Image Files (*.png *.jpg *.bmp)");
     imagePixmap.load(fileName);
 }
-void Sandbox::write(int *pixels) {
+void Sandbox::write(ImageToProcess itp, QString fileName) {
+    write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
+}
+void Sandbox::write(int *pixels, QString fileName) {
     QImage image = imagePixmap.toImage();
 
     for (int y = 0; y < imagePixmap.height(); y++)
         for (int x = 0; x < imagePixmap.width(); x++)
             image.setPixelColor(x,y, pixels[y * imagePixmap.width() + x]);
 
-    QFile file("newImage.png");
+    QFile file(fileName + ".png");
     file.open(QIODevice::WriteOnly);
     image.save(&file, "PNG");
 }
@@ -56,40 +59,7 @@ int* Sandbox::grayscaled() {
     return data;
 }
 int* Sandbox::gaussBlurGrayV2(double sigma) {
-    QList<QList<double>> kernel;
 
-    double s = sigma * sigma * 2;
-
-    int halfSize = static_cast<int>(sigma) * 3;
-    int size = halfSize * 2;
-    if (halfSize  % 2 == 0)
-        ++halfSize;
-
-    QList<double> str;
-    for (int i = -halfSize; i <= halfSize; i++){
-        str.append(exp(- i * i / s) / (M_PI * s));
-    }
-    kernel.append(str);
-
-
-    tool = new ParallelConvolutionalTool(imagePixmap.width(),
-                                         imagePixmap.height(),
-                                         gauss,
-                                         halfSize * 2);
-
-    DataRetriver dr = DataRetriver(NULL);
-
-    int* data = dr.retriveData(imagePixmap); //непосредственно вычисляем
-
-
-    kernel.clear();
-    for (int i = -halfSize; i <= halfSize; i++){
-        QList<double> str;
-        str.append(exp(- i * i / s) / (M_PI * s));
-        kernel.append(str);
-    }
-
-    imageMono->convolutionUniversal(core, true); //непосредственно вычисляем
 }
 int* Sandbox::gaussBlurGray(double sigma) {
     int size = floor(3 * sigma);
@@ -216,6 +186,129 @@ int* Sandbox::sobel() {
 
     return result;
 }
+int* Sandbox::harris(int winSize, int nPoints) {
+    int w = imagePixmap.width();
+    int h = imagePixmap.height();
+
+    // do not display gauss
+    setShowResultsFlagTo(false);
+    // smoothing
+    int* smoothed = gaussBlurGray(1.3);
+    ImageToProcess toProcess = ImageToProcess();
+    // gray, w* h, 0.0 ... 1.0, smoothed
+    toProcess.setDoubles(GRAY, tool->getCanals(), w, h);
+
+    // searching derivatives
+    ImageToProcess dx, dy = ImageToProcess();
+    double SOBEL_X[] =  {
+        1.0, 0, -1.0,
+        2.0, 0, -2.0,
+        1.0, 0, -1.0
+    };
+
+    ConvolutionalTool* temp = new SequentialConvolutionalTool(w, h, SOBEL_X, 3);
+
+    temp->process(BORDER, GRAY, smoothed);
+    // dx
+    double* derivativeX = Helper::copyOf(temp->getCanals(), w * h);
+    dx.setDoubles(GRAY, derivativeX, w, h);
+
+    double SOBEL_Y[] =  {
+        1.0, 2.0, 1.0,
+        0.0, 0.0, 0.0,
+        -1.0, -2.0, -1.0
+    };
+
+    temp->recharge(SOBEL_Y, 3);
+
+    temp->process(BORDER, GRAY, smoothed);
+    // dy
+    double* derivativeY = Helper::copyOf(temp->getCanals(), w * h);
+    dy.setDoubles(GRAY, derivativeY, w, h);
+
+    // no garbage collector
+    delete temp;
+
+    // derivatives have been found, proceeding
+    double *a = new double [w * h];
+    double *b = new double [w * h];
+    double *c = new double [w * h];
+    int halfSize = winSize / 2;
+
+
+    // searching weighs for window
+    double sigma = static_cast<double>(winSize) / 6;
+    double *gaussKernel = new double[winSize * winSize];
+
+    double coeff = 1 / (2 * M_PI * sigma * sigma);
+    double devider = 2 * sigma * sigma;
+
+    for (int u = -halfSize; u <= halfSize; u++)
+        for (int v = -halfSize; v <= halfSize; v++)
+            gaussKernel[(u + halfSize) * halfSize + (v  + halfSize)]
+                    = coeff * exp(- (u * u + v * v) / devider);
+
+
+
+    // calculating a,b,c for the points
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+            double sumA = 0, sumB = 0, sumC = 0;
+            for (int u = -halfSize; u <= halfSize; u++) {
+                for (int v = -halfSize; v <= halfSize; v++) {
+                    double i_x = dx.getValueSafe(i + u, j + v);
+                    double i_y = dy.getValueSafe(i + u, j + v);
+                    sumA += i_x * i_x * gaussKernel[u * halfSize + v];
+                    sumB += i_x * i_y * gaussKernel[u * halfSize + v];
+                    sumC += i_y * i_y * gaussKernel[u * halfSize + v];
+                }
+            }
+            a[j * w + i] = sumA;
+            b[j * w + i] = sumB;
+            c[j * w + i] = sumC;
+        }
+    }
+
+    ImageToProcess tempImg = ImageToProcess();
+
+
+    // eigenvalues
+    for (int j = 0; j < h; j++)
+        for (int i = 0; i < w; i++) {
+            double sc = a[j * w + i] + c[j * w + i];
+            double d = a[j * w + i] * c[j * w + i] - b[j * w + i] * b[j * w + i];
+            double det = sc * sc - 4 * d;
+            double L1 = (sc + sqrt(det)) / 2;
+            double L2 = (sc - sqrt(det)) / 2;
+            double cHarris = qMin(L1, L2);
+            tempImg.setValueSafe(i, j, cHarris);
+        }
+
+
+    QList <PointOfInterest> pois = tempImg.getPOIs(5, true);
+
+
+    // write(target, "HARRIS_RESPOND");
+
+    pois = ImageToProcess::filterPOIs(w, h, pois, nPoints);
+
+    ImageToProcess doubleRgb = ImageToProcess(imagePixmap, R | G | B);
+
+
+    // mark image
+    foreach (PointOfInterest point, pois) {
+        doubleRgb.setValueSafe(point.getX() - 1, point.getY(), 1);
+        doubleRgb.setValueSafe(point.getX() + 1, point.getY(), 1);
+        doubleRgb.setValueSafe(point.getX(), point.getY(), 1);
+        doubleRgb.setValueSafe(point.getX(), point.getY() - 1, 1);
+        doubleRgb.setValueSafe(point.getX(), point.getY() + 1, 1);
+    }
+    int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
+    setShowResultsFlagTo(true);
+    show(result);
+    return result;
+}
+
 int* Sandbox::moravek(int winSize, int nPoints) {
     int w = imagePixmap.width();
     int h = imagePixmap.height();
@@ -224,9 +317,8 @@ int* Sandbox::moravek(int winSize, int nPoints) {
     gaussBlurGray(1.3);
     ImageToProcess toProcess = ImageToProcess();
     // gray, w* h, 0.0 ... 1.0
-    toProcess.setDoubles(tool->getCanals(), w, h);
+    toProcess.setDoubles(GRAY, tool->getCanals(), w, h);
 
-    setShowResultsFlagTo(true);
     double* temp = new double[w * h];
     for (int i = 0; i < h; i++) {
         for (int j = 0; j < w; j++) {
@@ -242,9 +334,10 @@ int* Sandbox::moravek(int winSize, int nPoints) {
             temp[i * w + j] = min;
         }
     }
+
     QList <PointOfInterest> points = toProcess.getPOIs(winSize);
 
-    points = ImageToProcess::filterPOIs(&toProcess, points, nPoints);
+    points = ImageToProcess::filterPOIs(w, h, points, nPoints);
     ImageToProcess doubleRgb = ImageToProcess(imagePixmap, R | G | B);
 
 
@@ -257,6 +350,25 @@ int* Sandbox::moravek(int winSize, int nPoints) {
         doubleRgb.setValueSafe(point.getX(), point.getY() + 1, 1);
     }
     int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
+    setShowResultsFlagTo(true);
     show(result);
     return result;
+}
+int* Sandbox::pyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
+    double k = pow(2.0, 1.0 / (nLevels - 1)); // interval
+    double sigmaB = sqrt(sigma0 * sigma0 - sigmaA * sigmaA);
+    // do not display gauss
+    setShowResultsFlagTo(false);
+    int* blured = gaussBlurRGB(sigmaB);
+
+    double sigma[nLevels - 1];
+    double sigmaOld = sigma0;
+    for (int i = 0; i < nLevels - 1; i++) {
+        double sigmaNew = sigmaOld * k;
+        sigma[i] = sqrt(sigmaNew * sigmaNew - sigmaOld * sigmaOld);
+        sigmaOld = sigmaNew;
+    }
+
+    setShowResultsFlagTo(true);
+
 }

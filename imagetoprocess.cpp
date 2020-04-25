@@ -5,7 +5,7 @@ ImageToProcess::ImageToProcess()
 
 }
 
-ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) {
+ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
     w = pixmap.width();
     h = pixmap.height();
     DataRetriver dr = DataRetriver();
@@ -15,8 +15,9 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) {
     dr = DataRetriver(type, Helper::normalizeStraight);
     doubleData = dr.retriveData(rgbs, w, h);
 }
-void ImageToProcess::setDoubles(double *doubleData, int w, int h) {
+void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
     this->doubleData = doubleData;
+    this->type = type;
     this->w = w;
     this->h = h;
 }
@@ -94,20 +95,22 @@ QList<PointOfInterest> ImageToProcess::getPOIs(ImageToProcess* img,  int winSize
 QList<PointOfInterest> ImageToProcess::getPOIs(int winSize, bool isHarris) {
     return getPOIs(this, winSize, isHarris);
 }
-
-QList<PointOfInterest> ImageToProcess::filterPOIs(ImageToProcess* img, QList<PointOfInterest> pointsIn, int count)
+QList<PointOfInterest> ImageToProcess::filterPOIs(QList<PointOfInterest> pointsIn, int count) {
+    return filterPOIs(this->w, this->h, pointsIn, count);
+}
+QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInterest> pointsIn, int count)
 {
     QList<PointOfInterest> points (pointsIn);
 
     int r = 1;
 
-    //пока точек слишком много и радиус в пределах допустимого
-    while (points.size() > count && r < img->w / 2 && r < img->h / 2) {
+    // while the amount of points is sufficient and radius is ok
+    while (points.size() > count && r < w / 2 && r < h / 2) {
         points.erase(std::remove_if(points.begin(), points.end(),
-            [&](const PointOfInterest& curPoint) {   //лямбда-функция, захватываем все локальные переменные по ссылке
+            [&](const PointOfInterest& curPoint) {
                 for (const PointOfInterest& point : points) {
-                    double dst = PointOfInterest::distance(point, curPoint);  //расстояние
-                    //если точки достаточно близко и вторая точка сильнее
+                    double dst = PointOfInterest::distance(point, curPoint);
+                    // points quite close and the second one is more powerfull
                     if (dst < r && curPoint.getC() < point.getC()) {
                         return true;
                     }
@@ -116,7 +119,6 @@ QList<PointOfInterest> ImageToProcess::filterPOIs(ImageToProcess* img, QList<Poi
             }), points.end());
         r++;
     }
-
     return points;
 }
 
