@@ -30,6 +30,7 @@ public:
     int* gaussBlurRGB(double sigma);
     int* gaussBlurGray(double sigma);
     int* gaussBlurGrayV2(double sigma);
+    int* crossDemo();
     int* increaseSharpness();
     int* sobel();
     int* sobelV2();

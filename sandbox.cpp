@@ -95,7 +95,7 @@ int* Sandbox::gaussBlurRGB(double sigma) {
     show(result);
     return result;
 }
-int* Sandbox::increaseSharpness() {
+int* Sandbox::crossDemo() {
     double INCREASE_SHARPNESS[] =  {
         -1.0, -1.0, -1.0,
         -1.0, 9.0, -1.0,
@@ -103,19 +103,48 @@ int* Sandbox::increaseSharpness() {
     };
 
     int size = 3;
-
-
-    ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
-                                                            imagePixmap.height(),
-                                                            INCREASE_SHARPNESS,
-                                                            size);
+    int w = imagePixmap.width();
+    int h = imagePixmap.height();
 
     DataRetriver dr = DataRetriver(NULL);
 
     int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, R | G | B | A, data);
+
+    dr = DataRetriver(GRAY, Helper::normalizeStraight);
+
+    double* rgbNormalized = dr.retriveData(data, w, h);
+
+    ImageToProcess itp = ImageToProcess();
+    itp.setDoubles(GRAY, rgbNormalized, w, h);
+    ConvolutionalTool* temp = new SequentialConvolutionalTool();
+    ImageToProcess output = temp->cross(&itp, INCREASE_SHARPNESS, size, size);
+    int * result = output.toIntRGB();
+
     show(result);
     return result;
+}
+
+int* Sandbox::increaseSharpness() {
+    double INCREASE_SHARPNESS[] =  {
+            -1.0, -1.0, -1.0,
+            -1.0, 9.0, -1.0,
+            -1.0, -1.0, -1.0
+        };
+
+        int size = 3;
+
+
+        ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
+                                                                imagePixmap.height(),
+                                                                INCREASE_SHARPNESS,
+                                                                size);
+
+        DataRetriver dr = DataRetriver(NULL);
+
+        int* data = dr.retriveData(imagePixmap);
+        int * result = tool->process(BORDER, R | G | B | A, data);
+        show(result);
+        return result;
 }
 int* Sandbox::sobelV2() {
     double SOBEL_X[] =  {

@@ -18,6 +18,7 @@ public:
     double getValueSafe(int x, int y);
     void setValueSafe(int x, int y, double value);
     void setDoubles(Canal type, double* doubleData, int w, int h);
+    int* toIntRGB();
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);
     static QList<PointOfInterest> getPOIs(ImageToProcess* img, int winSize, bool isHarris = false);
     QList<PointOfInterest> filterPOIs(QList<PointOfInterest> pointsIn, int count);

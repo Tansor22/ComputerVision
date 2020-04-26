@@ -15,6 +15,9 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
     dr = DataRetriver(type, Helper::normalizeStraight);
     doubleData = dr.retriveData(rgbs, w, h);
 }
+int* ImageToProcess::toIntRGB() {
+    return Helper::toIntRGB(type, doubleData, w * h);
+}
 void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
     this->doubleData = doubleData;
     this->type = type;

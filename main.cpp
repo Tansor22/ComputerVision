@@ -12,7 +12,9 @@ int main(int argc, char *argv[])
     Sandbox* sb = new Sandbox(&w);
     sb->getImageViaFileDialog();
     //sb->getImageViaFileName(BUTTERFLY);
-    int *result = sb->harris(5, 800);//sb->moravek(5, 10);
-    sb->write(result);
+    //int *result = sb->harris(5, 800);//sb->moravek(5, 10);
+    //sb->calcPyramid(3, 2, 0, 1);
+    sb->crossDemo();
+    //sb->write(result);
     return a.exec();
 }
