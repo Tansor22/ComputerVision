@@ -6,6 +6,7 @@
 #include <imagetoprocess.h>
 #include <octave.h>
 #include <pyramid.h>
+#include<descriptor.h>
 #define SANDBOX_H
 
 
@@ -34,6 +35,7 @@ public:
     int* increaseSharpness();
     int* sobel();
     int* sobelV2();
+    int* descriptors();
     int* moravek(int winSize, int nPoints);
     int* harris(int winSize, int nPoints);
     void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);

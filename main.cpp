@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
     //sb->getImageViaFileName(BUTTERFLY);
     //int *result = sb->harris(5, 800);//sb->moravek(5, 10);
     //sb->calcPyramid(3, 2, 0, 1);
-    sb->crossDemo();
+    //sb->gaussBlurGrayV2(1.3);
+    sb->descriptors();
     //sb->write(result);
     return a.exec();
 }

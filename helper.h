@@ -25,6 +25,14 @@ public:
     static bool noAlpha(Canal type) {return (A & type ) != A; }
     static double* sample(int from, int to, double* data);
     static double* sample(int sampleSize, double* data, int srcSize);
+    static QString asQStringWithPrecision(double num, int precision) {return QString::number(num, 'f', precision);}
+    // templates
+    template <typename T>
+    // & means it will be mutated
+    static void init(QList<T> &list, int size) {
+        for (int i = 0; i < size; i++)
+            list << 0;
+    }
 };
 
 #endif // HELPER_H

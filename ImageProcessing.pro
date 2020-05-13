@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     convolutionaltool.cpp \
     dataretriver.cpp \
+    descriptor.cpp \
     helper.cpp \
     imagetoprocess.cpp \
     ipworker.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     constants.h \
     convolutionaltool.h \
     dataretriver.h \
+    descriptor.h \
     helper.h \
     imagetoprocess.h \
     ipworker.h \

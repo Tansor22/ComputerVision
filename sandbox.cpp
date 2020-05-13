@@ -62,6 +62,41 @@ int* Sandbox::grayscaled() {
 }
 int* Sandbox::gaussBlurGrayV2(double sigma) {
 
+
+    int size = (int)(3 * sigma);
+    int halfSize = size / 2;
+    double ss2 = 2 * sigma * sigma;
+    double firstDrob = 1.0 / (M_PI * ss2);
+
+    double* tmp = new double[size];
+    for(int x = -halfSize,  ptr = 0; x <= halfSize ; x++){
+        double gauss = firstDrob * exp( -(x * x) / ss2);
+        tmp[ptr++] = gauss;
+
+    }
+
+    int w = imagePixmap.width();
+    int h = imagePixmap.height();
+
+    DataRetriver dr = DataRetriver(NULL);
+
+    int* data = dr.retriveData(imagePixmap);
+
+    dr = DataRetriver(GRAY, Helper::normalizeStraight);
+
+    double* rgbNormalized = dr.retriveData(data, w, h);
+
+    ImageToProcess itp = ImageToProcess();
+    itp.setDoubles(GRAY, rgbNormalized, w, h);
+    ConvolutionalTool* temp = new SequentialConvolutionalTool();
+    ImageToProcess output = temp->cross(&itp, tmp, size, 1);
+
+    ImageToProcess output2 = temp->cross(&output, tmp, 1, size);
+    int * result = output2.toIntRGB();
+
+    show(result);
+    return result;
+
 }
 int* Sandbox::gaussBlurGray(double sigma) {
     int size = floor(3 * sigma);
@@ -126,25 +161,25 @@ int* Sandbox::crossDemo() {
 
 int* Sandbox::increaseSharpness() {
     double INCREASE_SHARPNESS[] =  {
-            -1.0, -1.0, -1.0,
-            -1.0, 9.0, -1.0,
-            -1.0, -1.0, -1.0
-        };
+        -1.0, -1.0, -1.0,
+        -1.0, 9.0, -1.0,
+        -1.0, -1.0, -1.0
+    };
 
-        int size = 3;
+    int size = 3;
 
 
-        ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
-                                                                imagePixmap.height(),
-                                                                INCREASE_SHARPNESS,
-                                                                size);
+    ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
+                                                            imagePixmap.height(),
+                                                            INCREASE_SHARPNESS,
+                                                            size);
 
-        DataRetriver dr = DataRetriver(NULL);
+    DataRetriver dr = DataRetriver(NULL);
 
-        int* data = dr.retriveData(imagePixmap);
-        int * result = tool->process(BORDER, R | G | B | A, data);
-        show(result);
-        return result;
+    int* data = dr.retriveData(imagePixmap);
+    int * result = tool->process(BORDER, R | G | B | A, data);
+    show(result);
+    return result;
 }
 int* Sandbox::sobelV2() {
     double SOBEL_X[] =  {
@@ -443,4 +478,12 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
 
             write(*layer->getImage(), path);
         }
+}
+
+int* Sandbox::descriptors() {
+    Descriptor d(2, 3);
+    qDebug() << d.asQString();
+    qDebug() << d.getHistograms();
+
+    return 0;
 }

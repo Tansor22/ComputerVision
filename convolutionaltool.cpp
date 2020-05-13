@@ -119,7 +119,7 @@ double* ConvolutionalTool::reduce(int canalsCount, double* arr, int size) {
     }
     return reducedValues;
 }
-// clips value, holds it in range min .. max
+// clips value, holds it in range min .с. max
 int ConvolutionalTool::clip(int num, int max, int min) {
     return num < min ? min : qMin(num, max);
 }
