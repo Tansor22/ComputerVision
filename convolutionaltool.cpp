@@ -130,65 +130,65 @@ double ConvolutionalTool::clip(double num, double max, double min) {
 double ConvolutionalTool::normalize(double value, double factor, int bias) {
     return factor * value + bias;
 }
-ImageToProcess ConvolutionalTool::cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider) {
-    // data required by calculation
-    int ku = kernelH / 2;
-    int kv = kernelW / 2;
-    int h = itp->h;
-    int w = itp->w;
-    double* src = itp->doubleData;
-    Canal type = itp->type;
-    int canalsCount = Helper::canalsCount(type);
+//ImageToProcess ConvolutionalTool::cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider) {
+//    // data required by calculation
+//    int ku = kernelH / 2;
+//    int kv = kernelW / 2;
+//    int h = itp->h;
+//    int w = itp->w;
+//    double* src = itp->doubleData;
+//    Canal type = itp->type;
+//    int canalsCount = Helper::canalsCount(type);
 
-    // for output
-    ImageToProcess output = ImageToProcess();
-    double* doubleOutput = new double[w * h * canalsCount];
+//    // for output
+//    ImageToProcess output = ImageToProcess();
+//    double* doubleOutput = new double[w * h * canalsCount];
 
-    // initialize auxiliary data
-    double* toReduce = new double[kernelW * kernelH * canalsCount];
+//    // initialize auxiliary data
+//    double* toReduce = new double[kernelW * kernelH * canalsCount];
 
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++) {
-            double* reduced;
+//    for (int i = 0; i < h; i++)
+//        for (int j = 0; j < w; j++) {
+//            double* reduced;
 
-            // cross
-            for(int u = -ku ; u <= ku; u++)
-                for(int v = -kv ; v <= kv; v++){
-                    int x = i - u;
-                    int y = j - v;
-                    // correct out of bound, copies of the image at the edges effect
-                    if(x < 0 || y < 0 || x >= h || y >= w){
-                        // x coordinat
-                        if( x < 0)
-                            x += h;
-                        else if( x >= h)
-                            x -= h;
-                        // y coordinat
-                        if( y < 0)
-                            y += w;
-                        else if( y >= w)
-                            y -= w;
-                    }
-                    // store values to reduce by canals, canal-corrected ->  + w * h * c
-                    int reducedPtr = 0;
-                    for (int c = 0; c < canalsCount; c++)
-                        toReduce[reducedPtr++] =
-                                kernel[(u + ku) * kernelW + v + kv]* src[x * w + y + w * h * c];
-                    reduced = reduce(canalsCount, toReduce, kernelW * kernelH);
-                }
-            Helper::printSample(0, canalsCount, reduced);
+//            // cross
+//            for(int u = -ku ; u <= ku; u++)
+//                for(int v = -kv ; v <= kv; v++){
+//                    int x = i - u;
+//                    int y = j - v;
+//                    // correct out of bound, copies of the image at the edges effect
+//                    if(x < 0 || y < 0 || x >= h || y >= w){
+//                        // x coordinat
+//                        if( x < 0)
+//                            x += h;
+//                        else if( x >= h)
+//                            x -= h;
+//                        // y coordinat
+//                        if( y < 0)
+//                            y += w;
+//                        else if( y >= w)
+//                            y -= w;
+//                    }
+//                    // store values to reduce by canals, canal-corrected ->  + w * h * c
+//                    int reducedPtr = 0;
+//                    for (int c = 0; c < canalsCount; c++)
+//                        toReduce[reducedPtr++] =
+//                                kernel[(u + ku) * kernelW + v + kv]* src[x * w + y + w * h * c];
+//                    reduced = reduce(canalsCount, toReduce, kernelW * kernelH);
+//                }
+//            Helper::printSample(0, canalsCount, reduced);
 
-            // correct by divider and fill output array
-            for (int c = 0; c < canalsCount; c++) {
-                reduced[c] *= divider;
-                doubleOutput[i * w + j + w * h * c] = reduced[c];
-            }
+//            // correct by divider and fill output array
+//            for (int c = 0; c < canalsCount; c++) {
+//                reduced[c] *= divider;
+//                doubleOutput[i * w + j + w * h * c] = reduced[c];
+//            }
 
-        }
-    // returning the result
-    output.setDoubles(type, doubleOutput, w, h);
-    return output;
-}
+//        }
+//    // returning the result
+//    output.setDoubles(type, doubleOutput, w, h);
+//    return output;
+//}
 void ConvolutionalTool::applyKernel(
         Canal type,
         int from,

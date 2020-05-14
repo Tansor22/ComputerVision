@@ -67,7 +67,7 @@ double* Helper::gauss(double sigma) {
         for(int y = -halfSize; y <= halfSize ; y++)
             matrix_gauss[(x + halfSize) * size + y + halfSize] /= test_sum;
 
-    Helper::printAs2D(matrix_gauss, size, size);
+    //Helper::printAs2D(matrix_gauss, size, size);
     return matrix_gauss;
 }
 

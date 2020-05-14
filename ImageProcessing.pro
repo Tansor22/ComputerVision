@@ -19,6 +19,7 @@ SOURCES += \
     convolutionaltool.cpp \
     dataretriver.cpp \
     descriptor.cpp \
+    descriptorbuilder.cpp \
     helper.cpp \
     imagetoprocess.cpp \
     ipworker.cpp \
@@ -34,6 +35,7 @@ HEADERS += \
     convolutionaltool.h \
     dataretriver.h \
     descriptor.h \
+    descriptorbuilder.h \
     helper.h \
     imagetoprocess.h \
     ipworker.h \

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     //int *result = sb->harris(5, 800);//sb->moravek(5, 10);
     //sb->calcPyramid(3, 2, 0, 1);
     //sb->gaussBlurGrayV2(1.3);
-    sb->descriptors();
+    sb->descriptors(10);
     //sb->write(result);
     return a.exec();
 }

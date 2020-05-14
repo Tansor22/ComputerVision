@@ -1,9 +1,10 @@
 #ifndef CONVOLUTIONALTOOL_H
-#define CONVOLUTIONALTOOL_H
 
+#define CONVOLUTIONALTOOL_H
 #include "helper.h"
-#include<imagetoprocess.h>
 #include "dataretriver.h"
+
+//#include <imagetoprocess.h>
 
 
 
@@ -21,7 +22,7 @@ public:
     double normalize(double value, double factor, int bias);
     void setSobelFlagTo(bool value) {sobel = value;}
     double* getCanals() { return canals;}
-    static ImageToProcess cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider = 1.0);
+    //static ImageToProcess cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider = 1.0);
     int clip(int num, int max, int min);
     static double clip(double num, double max, double min);
     void applyKernel(Canal type, int from, int to, double *tempCanals, double *canals, int *target,

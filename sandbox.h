@@ -7,6 +7,7 @@
 #include <octave.h>
 #include <pyramid.h>
 #include<descriptor.h>
+#include<descriptorbuilder.h>
 #define SANDBOX_H
 
 
@@ -17,10 +18,12 @@ private:
     QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
     QString fileName;
     QPixmap imagePixmap;
+    QList<PointOfInterest> pois;
 
 public:
     // meta
     Sandbox(MainForm* form) : form(form){};
+    Sandbox();
     void getImageViaFileDialog();
     void getImageViaFileName(QString fileName);
     void show(int* pixels = 0);
@@ -35,7 +38,7 @@ public:
     int* increaseSharpness();
     int* sobel();
     int* sobelV2();
-    int* descriptors();
+    int* descriptors(int nPoints);
     int* moravek(int winSize, int nPoints);
     int* harris(int winSize, int nPoints);
     void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
@@ -43,6 +46,7 @@ public:
     ConvolutionalTool* tool;
 private:
     bool showResults = true;
+    bool innerCall = false;
     QList<Octave*> pyramid;
 };
 

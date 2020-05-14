@@ -1,8 +1,14 @@
 #include "imagetoprocess.h"
 
+
 ImageToProcess::ImageToProcess()
 {
 
+}
+
+ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
+{
+    setDoubles(type, Helper::copyOf(data, w * h), w, h);
 }
 
 ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
@@ -18,6 +24,75 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
 int* ImageToProcess::toIntRGB() {
     return Helper::toIntRGB(type, doubleData, w * h);
 }
+
+void ImageToProcess::derivativeX()
+{
+    double SOBEL_X[] =  {
+        1.0, 0, -1.0,
+        2.0, 0, -2.0,
+        1.0, 0, -1.0
+    };
+    int size = 3;
+
+    ConvolutionalTool* tool =
+            new SequentialConvolutionalTool(w, h, SOBEL_X, size);
+    tool->setSobelFlagTo(true);
+
+    // probably should transfer to 0 .. 255
+    int* data = toIntRGB();
+    tool->process(BORDER, GRAY, data);
+    // probably should not copy
+    double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
+    // may return, not set
+    setDoubles(type, derivativeX, w, h);
+}
+
+void ImageToProcess::derivativeY()
+{
+    double SOBEL_Y[] =  {
+        1.0, 2.0, 1.0,
+        0.0, 0.0, 0.0,
+        -1.0, -2.0, -1.0
+    };
+    int size = 3;
+
+    ConvolutionalTool* tool =
+            new SequentialConvolutionalTool(w, h, SOBEL_Y, size);
+    tool->setSobelFlagTo(true);
+
+    // probably should transfer to 0 .. 255
+    int* data = toIntRGB();
+    tool->process(BORDER, GRAY, data);
+    // probably should not copy
+    double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
+    // may return, not set
+    setDoubles(type, derivativeX, w, h);
+}
+
+void ImageToProcess::gradient()
+{
+    double SOBEL_X[] =  {
+        1.0, 0, -1.0,
+        2.0, 0, -2.0,
+        1.0, 0, -1.0
+    };
+    double SOBEL_Y[] =  {
+        1.0, 2.0, 1.0,
+        0.0, 0.0, 0.0,
+        -1.0, -2.0, -1.0
+    };
+    int size = 3;
+    ConvolutionalTool* tool = new SequentialConvolutionalTool(w,
+                                                              h,
+                                                              SOBEL_X,
+                                                              size,
+                                                              SOBEL_Y);
+
+    int* data = toIntRGB();
+    tool->process(BORDER, GRAY, data);
+    setDoubles(type, tool->getCanals(), w, h);
+}
+
 void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
     this->doubleData = doubleData;
     this->type = type;
@@ -123,6 +198,21 @@ QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInt
         r++;
     }
     return points;
+}
+
+double *ImageToProcess::getDoubles() const
+{
+    return doubleData;
+}
+
+int ImageToProcess::getH() const
+{
+    return h;
+}
+
+int ImageToProcess::getW() const
+{
+    return w;
 }
 
 void ImageToProcess::downsample() {

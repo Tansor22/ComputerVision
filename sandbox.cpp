@@ -4,7 +4,7 @@
 #include <QApplication>
 
 void Sandbox::show(int *pixels) {
-    if (showResults) {
+    if (showResults && !innerCall) {
         if (pixels == 0) {
             // show current src image
             form->scene->addPixmap(imagePixmap);
@@ -31,7 +31,8 @@ void Sandbox::getImageViaFileDialog() {
     imagePixmap.load(fileName);
 }
 void Sandbox::write(ImageToProcess itp, QString fileName) {
-    write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
+   write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
+
 }
 void Sandbox::write(int *pixels, QString fileName) {
     QImage image = imagePixmap.toImage();
@@ -60,44 +61,44 @@ int* Sandbox::grayscaled() {
     show(data);
     return data;
 }
-int* Sandbox::gaussBlurGrayV2(double sigma) {
+//int* Sandbox::gaussBlurGrayV2(double sigma) {
 
 
-    int size = (int)(3 * sigma);
-    int halfSize = size / 2;
-    double ss2 = 2 * sigma * sigma;
-    double firstDrob = 1.0 / (M_PI * ss2);
+//    int size = (int)(3 * sigma);
+//    int halfSize = size / 2;
+//    double ss2 = 2 * sigma * sigma;
+//    double firstDrob = 1.0 / (M_PI * ss2);
 
-    double* tmp = new double[size];
-    for(int x = -halfSize,  ptr = 0; x <= halfSize ; x++){
-        double gauss = firstDrob * exp( -(x * x) / ss2);
-        tmp[ptr++] = gauss;
+//    double* tmp = new double[size];
+//    for(int x = -halfSize,  ptr = 0; x <= halfSize ; x++){
+//        double gauss = firstDrob * exp( -(x * x) / ss2);
+//        tmp[ptr++] = gauss;
 
-    }
+//    }
 
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
+//    int w = imagePixmap.width();
+//    int h = imagePixmap.height();
 
-    DataRetriver dr = DataRetriver(NULL);
+//    DataRetriver dr = DataRetriver(NULL);
 
-    int* data = dr.retriveData(imagePixmap);
+//    int* data = dr.retriveData(imagePixmap);
 
-    dr = DataRetriver(GRAY, Helper::normalizeStraight);
+//    dr = DataRetriver(GRAY, Helper::normalizeStraight);
 
-    double* rgbNormalized = dr.retriveData(data, w, h);
+//    double* rgbNormalized = dr.retriveData(data, w, h);
 
-    ImageToProcess itp = ImageToProcess();
-    itp.setDoubles(GRAY, rgbNormalized, w, h);
-    ConvolutionalTool* temp = new SequentialConvolutionalTool();
-    ImageToProcess output = temp->cross(&itp, tmp, size, 1);
+//    ImageToProcess itp = ImageToProcess();
+//    itp.setDoubles(GRAY, rgbNormalized, w, h);
+//    ConvolutionalTool* temp = new SequentialConvolutionalTool();
+//    ImageToProcess output = temp->cross(&itp, tmp, size, 1);
 
-    ImageToProcess output2 = temp->cross(&output, tmp, 1, size);
-    int * result = output2.toIntRGB();
+//    ImageToProcess output2 = temp->cross(&output, tmp, 1, size);
+//    int * result = output2.toIntRGB();
 
-    show(result);
-    return result;
+//    show(result);
+//    return result;
 
-}
+//}
 int* Sandbox::gaussBlurGray(double sigma) {
     int size = floor(3 * sigma);
     double* kernel =  Helper::gauss(sigma);
@@ -130,34 +131,34 @@ int* Sandbox::gaussBlurRGB(double sigma) {
     show(result);
     return result;
 }
-int* Sandbox::crossDemo() {
-    double INCREASE_SHARPNESS[] =  {
-        -1.0, -1.0, -1.0,
-        -1.0, 9.0, -1.0,
-        -1.0, -1.0, -1.0
-    };
+//int* Sandbox::crossDemo() {
+//    double INCREASE_SHARPNESS[] =  {
+//        -1.0, -1.0, -1.0,
+//        -1.0, 9.0, -1.0,
+//        -1.0, -1.0, -1.0
+//    };
 
-    int size = 3;
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
+//    int size = 3;
+//    int w = imagePixmap.width();
+//    int h = imagePixmap.height();
 
-    DataRetriver dr = DataRetriver(NULL);
+//    DataRetriver dr = DataRetriver(NULL);
 
-    int* data = dr.retriveData(imagePixmap);
+//    int* data = dr.retriveData(imagePixmap);
 
-    dr = DataRetriver(GRAY, Helper::normalizeStraight);
+//    dr = DataRetriver(GRAY, Helper::normalizeStraight);
 
-    double* rgbNormalized = dr.retriveData(data, w, h);
+//    double* rgbNormalized = dr.retriveData(data, w, h);
 
-    ImageToProcess itp = ImageToProcess();
-    itp.setDoubles(GRAY, rgbNormalized, w, h);
-    ConvolutionalTool* temp = new SequentialConvolutionalTool();
-    ImageToProcess output = temp->cross(&itp, INCREASE_SHARPNESS, size, size);
-    int * result = output.toIntRGB();
+//    ImageToProcess itp = ImageToProcess();
+//    itp.setDoubles(GRAY, rgbNormalized, w, h);
+//    ConvolutionalTool* temp = new SequentialConvolutionalTool();
+//    ImageToProcess output = temp->cross(&itp, INCREASE_SHARPNESS, size, size);
+//    int * result = output.toIntRGB();
 
-    show(result);
-    return result;
-}
+//    show(result);
+//    return result;
+//}
 
 int* Sandbox::increaseSharpness() {
     double INCREASE_SHARPNESS[] =  {
@@ -351,7 +352,7 @@ int* Sandbox::harris(int winSize, int nPoints) {
         }
 
 
-    QList <PointOfInterest> pois = tempImg.getPOIs(5, true);
+    pois = tempImg.getPOIs(5, true);
 
 
     // write(target, "HARRIS_RESPOND");
@@ -480,10 +481,19 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         }
 }
 
-int* Sandbox::descriptors() {
-    Descriptor d(2, 3);
-    qDebug() << d.asQString();
-    qDebug() << d.getHistograms();
+int* Sandbox::descriptors(int nPoints) {
+//    Descriptor d(2, 3);
+//    qDebug() << d.asQString();
+//    qDebug() << d.getHistograms();
+
+
+    int w = imagePixmap.width();
+    int h = imagePixmap.height();
+
+    // getting pois with harris method
+    harris(3, nPoints);
+    ImageToProcess* itp = new ImageToProcess(GRAY, tool->getCanals(), w, h);
+    DescriptorBuilder db (itp);
 
     return 0;
 }

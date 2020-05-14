@@ -1,10 +1,9 @@
 #ifndef DATARETRIVER_H
+#define DATARETRIVER_H
 #include <QPixmap>
 #include <QImage>
 #include <QtDebug>
 #include <constants.h>
-#define DATARETRIVER_H
-
 
 class DataRetriver
 {
