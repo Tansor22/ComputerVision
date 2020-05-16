@@ -17,6 +17,8 @@ public:
     static void printCanals(int *arr, int rows, int columns);
     static double* copyOf(double* arr, int size);
     static double normalizeStraight(int rgb);
+    static QList<double> wrapInQList(double* arr, int size);
+    static QList<QList<double>> wrapInQListPerCanal(Canal type, double* arr, int w, int h);
     static int* toIntRGB(Canal type, double* data, int size);
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);

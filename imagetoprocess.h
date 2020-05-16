@@ -1,5 +1,6 @@
 #ifndef IMAGETOPROCESS_H
 #include "sequentialconvolutionaltool.h"
+#include "parallelconvolutionaltool.h"
 #define IMAGETOPROCESS_H
 #include <QPixmap>
 #include <constants.h>
@@ -20,6 +21,7 @@ public:
     void setDoubles(Canal type, double* doubleData, int w, int h);
     int* toIntRGB();
     void derivativeX();
+    void gaussBlur(double sigma);
     void derivativeY();
     void gradient();
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);

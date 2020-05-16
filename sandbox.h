@@ -18,6 +18,7 @@ private:
     QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
     QString fileName;
     QPixmap imagePixmap;
+    double* doubles;
     QList<PointOfInterest> pois;
 
 public:
@@ -31,6 +32,7 @@ public:
     void write(ImageToProcess itp, QString fileName = "newImage");
     // logic
     int* grayscaled();
+    double* getDoublesAs(Canal type, int w, int h, double (*mapper)(int) = NULL);
     int* gaussBlurRGB(double sigma);
     int* gaussBlurGray(double sigma);
     int* gaussBlurGrayV2(double sigma);

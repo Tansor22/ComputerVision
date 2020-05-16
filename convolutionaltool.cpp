@@ -21,11 +21,11 @@ int* ConvolutionalTool::setBounds(FillType ft, int pixels[]){
     int tmpLength = tmpCols * tmpRows;
     int *tmp = new int[tmpLength];
 
-    qDebug() << "Length is " << (w * h) << '\n'
-             << "Rows is " << h << '\n'
-             << "TmpCols is " << tmpCols << '\n'
-             << "TmpRows is " << tmpRows << '\n'
-             << "TmpLength is " << tmpLength << '\n';
+//    qDebug() << "Length is " << (w * h) << '\n'
+//             << "Rows is " << h << '\n'
+//             << "TmpCols is " << tmpCols << '\n'
+//             << "TmpRows is " << tmpRows << '\n'
+//             << "TmpLength is " << tmpLength << '\n';
 
     switch(ft) {
     // blackbox

@@ -3,6 +3,32 @@
 double Helper::normalizeStraight(int rgb) {
     return rgb / 255.0;
 }
+
+QList<double> Helper::wrapInQList(double *arr, int size)
+{
+    QList<double> wrapper = QList<double>();
+    for (int i = 0; i < size; i++) wrapper.append(arr[i]);
+    return wrapper;
+}
+
+QList<QList<double>> Helper::wrapInQListPerCanal(Canal type, double *arr, int w, int h)
+{
+    QList<QList<double>> wrapper = QList<QList<double>>();
+    int canalsCount = Helper::canalsCount(type);
+    // canals lists
+    for (int c = 0; c < canalsCount; c++) {
+        QList<double> canal = QList<double>();
+        wrapper.append(canal);
+    }
+    // wrap
+    for (int i = 0; i < h; i++)
+        for (int j = 0; j < w; j++)
+            for (int c = 0; c < canalsCount; c++)
+                wrapper[c].append(arr[i * w + j + w * h * c]);
+    return wrapper;
+}
+
+
 int Helper::normalizeReverse(double normalized) {
     return (int) (normalized * 255.0);
 }

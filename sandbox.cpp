@@ -31,7 +31,7 @@ void Sandbox::getImageViaFileDialog() {
     imagePixmap.load(fileName);
 }
 void Sandbox::write(ImageToProcess itp, QString fileName) {
-   write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
+    write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
 
 }
 void Sandbox::write(int *pixels, QString fileName) {
@@ -60,6 +60,15 @@ int* Sandbox::grayscaled() {
 
     show(data);
     return data;
+}
+
+double* Sandbox::getDoublesAs(Canal type, int w, int h, double (*mapper)(int))
+{
+    DataRetriver dr = DataRetriver(NULL);
+    int* data = dr.retriveData(imagePixmap);
+    dr = DataRetriver(type, mapper);
+    // normalized
+    return dr.retriveData(data, w, h);
 }
 //int* Sandbox::gaussBlurGrayV2(double sigma) {
 
@@ -127,7 +136,7 @@ int* Sandbox::gaussBlurRGB(double sigma) {
     DataRetriver dr = DataRetriver(NULL);
 
     int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, R | G | B | A, data);
+    int * result = tool->process(BORDER, R | G | B, data);
     show(result);
     return result;
 }
@@ -428,9 +437,12 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
     int h = imagePixmap.height();
     // do not display gauss
     setShowResultsFlagTo(false);
-    int* blured = gaussBlurRGB(sigmaB);
-    ImageToProcess toProcess = ImageToProcess();
-    toProcess.setDoubles(R | G | B, tool->getCanals(), w, h);
+    //int* blured = gaussBlurRGB(sigmaB);
+    ImageToProcess* toProcess = new ImageToProcess(imagePixmap, R | G | B);
+    //toProcess.setDoubles(R | G | B, tool->getCanals(), w, h);
+
+    // blur it a bit
+    toProcess->gaussBlur(1.3);
 
     double sigma[nLevels - 1];
     double sigmaOld = sigma0;
@@ -439,9 +451,6 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         sigma[i] = sqrt(sigmaNew * sigmaNew - sigmaOld * sigmaOld);
         sigmaOld = sigmaNew;
     }
-    // getting rid of old pyramid
-    foreach (Octave* octave, pyramid)  delete octave;
-    pyramid.clear();
 
     double sigmaEff = sigma0;
     QList <Pyramid*> *oneOctave;  // single octave
@@ -451,16 +460,16 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         oneOctave = new QList <Pyramid*>();   //создаем новую октаву
         double sigmaLocal = sigma0;
 
-        currentLayer = new Pyramid(&toProcess, i, 0);
+        currentLayer = new Pyramid(toProcess, i, 0);
         currentLayer->setSigmaLocal(sigmaLocal);
         currentLayer->setSigmaEffective(sigmaEff);
         oneOctave->append(currentLayer);
 
         for (int j = 1; j < nLevels; j++){
-            gaussBlurRGB(sigma[j - 1]);
+            toProcess->gaussBlur(sigma[j - 1]);
             sigmaLocal *= k;
             sigmaEff *= k;
-            currentLayer = new Pyramid(&toProcess, i, j);
+            currentLayer = new Pyramid(toProcess, i, j);
             currentLayer->setSigmaLocal(sigmaLocal);
             currentLayer->setSigmaEffective(sigmaEff);
             oneOctave->append(currentLayer);
@@ -468,23 +477,22 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         pyramid.append(new Octave(oneOctave, i));
 
         if (i < nOctaves - 1)
-            toProcess.downsample(); // shrinken image
+            toProcess->downsample(); // shrinken image
     }
 
     // writting to hard disk
     foreach (Octave *octave, pyramid)
         foreach (Pyramid *layer, *octave->getLayers()) {
-            QString path = QApplication::applicationDirPath() + "/Input/Pyramid/pyramid"
+            QString path = "/pyramid"
                     + QString::number(layer->getOctaves() + 1) + "-"  + QString::number(layer->getLayers() + 1);
-
             write(*layer->getImage(), path);
         }
 }
 
 int* Sandbox::descriptors(int nPoints) {
-//    Descriptor d(2, 3);
-//    qDebug() << d.asQString();
-//    qDebug() << d.getHistograms();
+    //    Descriptor d(2, 3);
+    //    qDebug() << d.asQString();
+    //    qDebug() << d.getHistograms();
 
 
     int w = imagePixmap.width();

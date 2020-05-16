@@ -11,7 +11,7 @@ ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
     setDoubles(type, Helper::copyOf(data, w * h), w, h);
 }
 
-ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
+ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
     w = pixmap.width();
     h = pixmap.height();
     DataRetriver dr = DataRetriver();
@@ -23,6 +23,20 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type){
 }
 int* ImageToProcess::toIntRGB() {
     return Helper::toIntRGB(type, doubleData, w * h);
+}
+void ImageToProcess::gaussBlur(double sigma) {
+    int size = floor(3 * sigma);
+    double* kernel =  Helper::gauss(sigma);
+
+    ConvolutionalTool* tool  = new ParallelConvolutionalTool(w, h, kernel, size);
+
+    int* data = toIntRGB();
+    // assert result == toIntRGB()
+    int * result = tool->process(BORDER, type, data);
+    setDoubles(type, Helper::copyOf(tool->getCanals(), w * h), w, h);
+    delete data;
+    delete result;
+    delete tool;
 }
 
 void ImageToProcess::derivativeX()
