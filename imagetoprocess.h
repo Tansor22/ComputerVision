@@ -13,6 +13,7 @@ class ImageToProcess
 {
 public:
     ImageToProcess();
+    ~ImageToProcess();
     ImageToProcess(Canal type, double* data, int w, int h);
     ImageToProcess(QPixmap Pixmap, Canal type);
     double shiftError(int winSize, int x, int y, int dx, int dy);
@@ -21,7 +22,7 @@ public:
     void setDoubles(Canal type, double* doubleData, int w, int h);
     int* toIntRGB();
     void derivativeX();
-    ImageToProcess cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider = 1.0);
+    void cross(double* kernel, int kernelW, int kernelH, double divider = 1.0);
     void gaussBlur(double sigma);
     void derivativeY();
     void gradient();

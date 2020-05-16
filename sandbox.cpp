@@ -372,12 +372,15 @@ int* Sandbox::harris(int winSize, int nPoints) {
 
 
     // mark image
+    int crossSize = 3;
     foreach (PointOfInterest point, pois) {
-        doubleRgb.setValueSafe(point.getX() - 1, point.getY(), 1);
-        doubleRgb.setValueSafe(point.getX() + 1, point.getY(), 1);
         doubleRgb.setValueSafe(point.getX(), point.getY(), 1);
-        doubleRgb.setValueSafe(point.getX(), point.getY() - 1, 1);
-        doubleRgb.setValueSafe(point.getX(), point.getY() + 1, 1);
+        for (int i = 1; i <= crossSize; i++) {
+            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1);
+            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1);
+            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1);
+            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1);
+        }
     }
     int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
     setShowResultsFlagTo(true);
@@ -418,12 +421,15 @@ int* Sandbox::moravek(int winSize, int nPoints) {
 
 
     // mark image
+    int crossSize = 3;
     foreach (PointOfInterest point, points) {
-        doubleRgb.setValueSafe(point.getX() - 1, point.getY(), 1);
-        doubleRgb.setValueSafe(point.getX() + 1, point.getY(), 1);
         doubleRgb.setValueSafe(point.getX(), point.getY(), 1);
-        doubleRgb.setValueSafe(point.getX(), point.getY() - 1, 1);
-        doubleRgb.setValueSafe(point.getX(), point.getY() + 1, 1);
+        for (int i = 1; i <= crossSize; i++) {
+            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1);
+            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1);
+            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1);
+            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1);
+        }
     }
     int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
     setShowResultsFlagTo(true);
@@ -436,10 +442,7 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
     int w = imagePixmap.width();
     int h = imagePixmap.height();
     // do not display gauss
-    setShowResultsFlagTo(false);
-    //int* blured = gaussBlurRGB(sigmaB);
     ImageToProcess* toProcess = new ImageToProcess(imagePixmap, R | G | B);
-    //toProcess.setDoubles(R | G | B, tool->getCanals(), w, h);
 
     // blur it a bit
     toProcess->gaussBlur(1.3);
@@ -483,8 +486,9 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
     // writting to hard disk
     foreach (Octave *octave, pyramid)
         foreach (Pyramid *layer, *octave->getLayers()) {
-            QString path = "/pyramid"
-                    + QString::number(layer->getOctaves() + 1) + "-"  + QString::number(layer->getLayers() + 1);
+            QString path = "octave " + QString::number(layer->getOctaves() + 1) +
+                    + "-sigma_local"+ QString::number(layer->getSigmaLocal()) + "-sigma_global" +QString::number(layer->getSigmaEffective()) +
+                    "_image" + QString::number(layer->getLayers() + 1)+ ".png";
             write(*layer->getImage(), path);
         }
 }

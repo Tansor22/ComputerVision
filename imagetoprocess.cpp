@@ -1,17 +1,11 @@
 #include "imagetoprocess.h"
-ImageToProcess ImageToProcess::cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider) {
+void ImageToProcess::cross(double* kernel, int kernelW, int kernelH, double divider) {
     // data required by calculation
     int ku = kernelH / 2;
     int kv = kernelW / 2;
-    int h = itp->h;
-    int w = itp->w;
-    double* src = itp->doubleData;
-    Canal type = itp->type;
     int canalsCount = Helper::canalsCount(type);
 
-    // for output
-    ImageToProcess output = ImageToProcess();
-    double* doubleOutput = new double[w * h * canalsCount];
+    double* crossed = new double[w * h * canalsCount];
 
     // initialize auxiliary data
     double* toReduce = new double[kernelW * kernelH * canalsCount];
@@ -19,7 +13,6 @@ ImageToProcess ImageToProcess::cross(ImageToProcess* itp, double* kernel, int ke
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
             double* reduced;
-
             // cross
             for(int u = -ku ; u <= ku; u++)
                 for(int v = -kv ; v <= kv; v++){
@@ -42,25 +35,28 @@ ImageToProcess ImageToProcess::cross(ImageToProcess* itp, double* kernel, int ke
                     int reducedPtr = 0;
                     for (int c = 0; c < canalsCount; c++)
                         toReduce[reducedPtr++] =
-                                kernel[(u + ku) * kernelW + v + kv]* src[x * w + y + w * h * c];
+                                kernel[(u + ku) * kernelW + v + kv]* doubleData[x * w + y + w * h * c];
                     reduced = ConvolutionalTool::reduce(canalsCount, toReduce, kernelW * kernelH);
                 }
-            Helper::printSample(0, canalsCount, reduced);
+            //Helper::printSample(0, canalsCount, reduced);
 
             // correct by divider and fill output array
             for (int c = 0; c < canalsCount; c++) {
                 reduced[c] *= divider;
-                doubleOutput[i * w + j + w * h * c] = reduced[c];
+                crossed[i * w + j + w * h * c] = reduced[c];
             }
 
         }
-    // returning the result
-    output.setDoubles(type, doubleOutput, w, h);
-    return output;
+    setDoubles(type, crossed, w, h);
 }
 ImageToProcess::ImageToProcess()
 {
 
+}
+
+ImageToProcess::~ImageToProcess()
+{
+    delete doubleData;
 }
 
 ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
@@ -90,6 +86,7 @@ void ImageToProcess::gaussBlur(double sigma) {
     int* data = toIntRGB();
     // assert result == toIntRGB()
     int * result = tool->process(BORDER, type, data);
+    //cross(kernel,size, size);
     setDoubles(type, Helper::copyOf(tool->getCanals(), w * h), w, h);
     delete data;
     delete result;
@@ -99,9 +96,9 @@ void ImageToProcess::gaussBlur(double sigma) {
 void ImageToProcess::derivativeX()
 {
     double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
+        -1.0, 0, 1.0,
+        -2.0, 0, 2.0,
+        -1.0, 0, 1.0
     };
     int size = 3;
 
@@ -121,9 +118,9 @@ void ImageToProcess::derivativeX()
 void ImageToProcess::derivativeY()
 {
     double SOBEL_Y[] =  {
-        1.0, 2.0, 1.0,
+        -1.0, -2.0, -1.0,
         0.0, 0.0, 0.0,
-        -1.0, -2.0, -1.0
+        1.0, 2.0, 1.0
     };
     int size = 3;
 

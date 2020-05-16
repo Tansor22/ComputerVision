@@ -11,14 +11,11 @@ int main(int argc, char *argv[])
     MainForm w;
     Sandbox* sb = new Sandbox(&w);
     sb->getImageViaFileDialog();
-    double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
-    };
     ImageToProcess itp = ImageToProcess(sb->imagePixmap, GRAY);
-    ImageToProcess itp2 = itp.cross(&itp,SOBEL_X, 3,3);
-    //itp.derivativeX();
+    //sb->calcPyramid(2, 3, 0, 1);
+    //itp.derivativeY();
+    itp.gaussBlur(1.6);
+
 
     //sb->getImageViaFileName(BUTTERFLY);
    int* result = itp.toIntRGB();
