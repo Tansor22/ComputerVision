@@ -14,14 +14,15 @@
 class Sandbox
 {
 private:
+
+
+public:
     MainForm* form;
     QString IMAGES_PATH = "C:/Users/Sergei/Documents/QtProjects/images";
     QString fileName;
     QPixmap imagePixmap;
     double* doubles;
     QList<PointOfInterest> pois;
-
-public:
     // meta
     Sandbox(MainForm* form) : form(form){};
     Sandbox();

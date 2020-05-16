@@ -21,6 +21,7 @@ public:
     void setDoubles(Canal type, double* doubleData, int w, int h);
     int* toIntRGB();
     void derivativeX();
+    ImageToProcess cross(ImageToProcess* itp, double* kernel, int kernelW, int kernelH, double divider = 1.0);
     void gaussBlur(double sigma);
     void derivativeY();
     void gradient();
