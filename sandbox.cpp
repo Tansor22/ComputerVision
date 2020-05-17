@@ -3,26 +3,34 @@
 
 #include <QApplication>
 
-void Sandbox::show(int *pixels) {
+void Sandbox::show(int *pixels, int w, int h) {
     if (showResults && !innerCall) {
         if (pixels == 0) {
             // show current src image
             form->scene->addPixmap(imagePixmap);
         } else {
-            QImage* image = new QImage(imagePixmap.width(), imagePixmap.height(), QImage::Format_ARGB32);
+            // default params logic
+            w = w < 0 ? imagePixmap.width() : w;
+            h = h < 0 ? imagePixmap.height() : h;
+            QImage image = QImage(w, h, QImage::Format_ARGB32);
 
-            for (int y = 0; y < imagePixmap.height(); y++)
-                for (int x = 0; x < imagePixmap.width(); x++)
-                    image->setPixelColor(x,y, pixels[y * imagePixmap.width() + x]);
-            form->scene->addPixmap(QPixmap::fromImage(*image));
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    image.setPixelColor(x,y, pixels[y * w + x]);
+            form->scene->addPixmap(QPixmap::fromImage(image));
         }
         form->showMaximized();
     }
+}
+
+void Sandbox::show(ImageToProcess itp) {
+    show(itp.toIntRGB(), itp.w, itp.h);
 }
 void Sandbox::getImageViaFileName(QString fileName)  {
     this->fileName = fileName;
     imagePixmap.load(fileName);
 }
+
 void Sandbox::getImageViaFileDialog() {
 
     fileName = QFileDialog::
@@ -31,15 +39,17 @@ void Sandbox::getImageViaFileDialog() {
     imagePixmap.load(fileName);
 }
 void Sandbox::write(ImageToProcess itp, QString fileName) {
-    write(Helper::toIntRGB(itp.type, itp.doubleData, itp.w * itp.h), fileName);
+    write(itp.toIntRGB(), fileName, itp.w, itp.h);
 
 }
-void Sandbox::write(int *pixels, QString fileName) {
+void Sandbox::write(int *pixels, QString fileName, int w, int h) {
     QImage image = imagePixmap.toImage();
-
-    for (int y = 0; y < imagePixmap.height(); y++)
-        for (int x = 0; x < imagePixmap.width(); x++)
-            image.setPixelColor(x,y, pixels[y * imagePixmap.width() + x]);
+    // default params logic
+    w = w < 0 ? imagePixmap.width() : w;
+    h = h < 0 ? imagePixmap.height() : h;
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+            image.setPixelColor(x,y, pixels[y * w + x]);
 
     QFile file(fileName + ".png");
     file.open(QIODevice::WriteOnly);
@@ -112,7 +122,7 @@ int* Sandbox::gaussBlurGray(double sigma) {
     int size = floor(3 * sigma);
     double* kernel =  Helper::gauss(sigma);
 
-    tool = new ParallelConvolutionalTool(imagePixmap.width(),
+    tool = new SequentialConvolutionalTool(imagePixmap.width(),
                                          imagePixmap.height(),
                                          kernel,
                                          size);
@@ -388,15 +398,12 @@ int* Sandbox::harris(int winSize, int nPoints) {
     return result;
 }
 
-int* Sandbox::moravek(int winSize, int nPoints) {
+ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
     int w = imagePixmap.width();
     int h = imagePixmap.height();
     // do not display gauss
-    setShowResultsFlagTo(false);
-    gaussBlurGray(1.3);
-    ImageToProcess toProcess = ImageToProcess();
-    // gray, w* h, 0.0 ... 1.0
-    toProcess.setDoubles(GRAY, tool->getCanals(), w, h);
+    ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+    toProcess.gaussBlur(1.5);
 
     double* temp = new double[w * h];
     for (int i = 0; i < h; i++) {
@@ -416,36 +423,33 @@ int* Sandbox::moravek(int winSize, int nPoints) {
 
     QList <PointOfInterest> points = toProcess.getPOIs(winSize);
 
+    // target points
     points = ImageToProcess::filterPOIs(w, h, points, nPoints);
+
     ImageToProcess doubleRgb = ImageToProcess(imagePixmap, R | G | B);
 
 
-    // mark image
+    // return marked image image
     int crossSize = 3;
     foreach (PointOfInterest point, points) {
-        doubleRgb.setValueSafe(point.getX(), point.getY(), 1);
+        doubleRgb.setValueSafe(point.getX(), point.getY(), 1.0);
         for (int i = 1; i <= crossSize; i++) {
-            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1);
-            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1);
-            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1);
-            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1);
+            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1.0);
+            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1.0);
+            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1.0);
+            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1.0);
         }
     }
-    int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
-    setShowResultsFlagTo(true);
-    show(result);
-    return result;
+    return doubleRgb;
 }
 void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
     double k = pow(2.0, 1.0 / (nLevels - 1)); // interval
     double sigmaB = sqrt(sigma0 * sigma0 - sigmaA * sigmaA);
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
-    // do not display gauss
+
     ImageToProcess* toProcess = new ImageToProcess(imagePixmap, R | G | B);
 
     // blur it a bit
-    toProcess->gaussBlur(1.3);
+    toProcess->gaussBlur(sigmaB);
 
     double sigma[nLevels - 1];
     double sigmaOld = sigma0;
@@ -489,7 +493,7 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
             QString path = "octave " + QString::number(layer->getOctaves() + 1) +
                     + "-sigma_local"+ QString::number(layer->getSigmaLocal()) + "-sigma_global" +QString::number(layer->getSigmaEffective()) +
                     "_image" + QString::number(layer->getLayers() + 1)+ ".png";
-            write(*layer->getImage(), path);
+            layer->getImage()->toQImage().save(path);
         }
 }
 

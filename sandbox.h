@@ -28,8 +28,9 @@ public:
     Sandbox();
     void getImageViaFileDialog();
     void getImageViaFileName(QString fileName);
-    void show(int* pixels = 0);
-    void write(int *pixels, QString fileName = "newImage");
+    void show(int* pixels = 0, int w = -1, int h = -1);
+    void show(ImageToProcess itp);
+    void write(int *pixels, QString fileName = "newImage", int w = -1, int h = -1);
     void write(ImageToProcess itp, QString fileName = "newImage");
     // logic
     int* grayscaled();
@@ -42,7 +43,7 @@ public:
     int* sobel();
     int* sobelV2();
     int* descriptors(int nPoints);
-    int* moravek(int winSize, int nPoints);
+    ImageToProcess moravek(int winSize, int nPoints);
     int* harris(int winSize, int nPoints);
     void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
     void setShowResultsFlagTo(bool value) {showResults = value;}

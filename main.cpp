@@ -10,22 +10,25 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainForm w;
     Sandbox* sb = new Sandbox(&w);
-    sb->getImageViaFileDialog();
-    ImageToProcess itp = ImageToProcess(sb->imagePixmap, GRAY);
+
+    // TODO: getImageViaFileDialog не использовать его нахуй!
+   //sb->getImageViaFileDialog();
     //sb->calcPyramid(2, 3, 0, 1);
     //itp.derivativeY();
-    itp.gaussBlur(1.6);
-
-
-    //sb->getImageViaFileName(BUTTERFLY);
-   int* result = itp.toIntRGB();
+    //itp.gaussBlur(5.6);
+    sb->getImageViaFileName(BUTTERFLY);
+    //ImageToProcess itp = ImageToProcess(sb->imagePixmap, R |G |B | A);
+    //int* result = sb->gaussBlurGray(2);
+    ImageToProcess marked = sb->moravek(5, 500);
+   //int* result = sb->increaseSharpness();
     //int *result = sb->moravek(5, 400);//sb->harris(5, 800);//sb->moravek(5, 10);
     //sb->calcPyramid(3, 2, 0, 1);
     //sb->gaussBlurGrayV2(1.3);
     //sb->descriptors(10);
     //sb->gaussBlurRGB(4.5);
     //sb->calcPyramid(3, 2, 1.6, 2.0);
-    sb->write(result);
-    sb->show(result);
+    //sb->write(result);
+    //itp.gaussBlur(6.4);
+    sb->show(marked);
     return a.exec();
 }

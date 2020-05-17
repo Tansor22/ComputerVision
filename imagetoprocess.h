@@ -21,6 +21,7 @@ public:
     void setValueSafe(int x, int y, double value);
     void setDoubles(Canal type, double* doubleData, int w, int h);
     int* toIntRGB();
+    QImage toQImage();
     void derivativeX();
     void cross(double* kernel, int kernelW, int kernelH, double divider = 1.0);
     void gaussBlur(double sigma);

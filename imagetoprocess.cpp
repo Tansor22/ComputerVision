@@ -56,7 +56,7 @@ ImageToProcess::ImageToProcess()
 
 ImageToProcess::~ImageToProcess()
 {
-    delete doubleData;
+    delete[] doubleData;
 }
 
 ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
@@ -77,17 +77,27 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
 int* ImageToProcess::toIntRGB() {
     return Helper::toIntRGB(type, doubleData, w * h);
 }
+
+QImage ImageToProcess::toQImage()
+{
+    int* rgbs = toIntRGB();
+    QImage image = QImage(w, h, QImage::Format_RGB32);
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+            image.setPixelColor(x,y, rgbs[y * w + x]);
+    return image;
+}
+
 void ImageToProcess::gaussBlur(double sigma) {
     int size = floor(3 * sigma);
     double* kernel =  Helper::gauss(sigma);
 
-    ConvolutionalTool* tool  = new ParallelConvolutionalTool(w, h, kernel, size);
+    ConvolutionalTool* tool = new SequentialConvolutionalTool(w, h, kernel, size);
 
     int* data = toIntRGB();
     // assert result == toIntRGB()
     int * result = tool->process(BORDER, type, data);
-    //cross(kernel,size, size);
-    setDoubles(type, Helper::copyOf(tool->getCanals(), w * h), w, h);
+    setDoubles(type, Helper::copyOf(tool->getCanals(), w * h * Helper::canalsCount(type)), w, h);
     delete data;
     delete result;
     delete tool;
@@ -216,7 +226,7 @@ QList<PointOfInterest> ImageToProcess::getPOIs(ImageToProcess* img,  int winSize
     double threshold = min + (max - min) * 0.005;
     if (isHarris)
         threshold = min + (max - min) * 0.004;
-    qDebug() << min << " " << max << " " << threshold;
+    //qDebug() << min << " " << max << " " << threshold;
 
     // the most powerful points will be added
     for (int i = 0; i < h; i++) {
@@ -298,15 +308,16 @@ void ImageToProcess::downsample() {
     int oldSize = oldW * oldH;
 
 
-    double * oldDoubleData = Helper::copyOf(doubleData, size);
+    double * oldDoubleData = doubleData;
 
-    doubleData = new double[size];
+    doubleData = new double[size * nCanals];
 
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             for (int c = 0; c < nCanals; c++)
                 // seems spooky, doesn't it?
-                doubleData[i * w + j + size * c] = oldDoubleData[i * 2 * oldW + j * 2 + oldSize * c];
+                doubleData[i * w + j + size * c]
+                        = oldDoubleData[i * 2 * oldW + j * 2 + oldSize * c];
 
     delete [] oldDoubleData;
 

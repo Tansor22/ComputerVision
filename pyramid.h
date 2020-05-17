@@ -7,6 +7,9 @@ class Pyramid
 {
 public:
     Pyramid();
+    ~Pyramid() {
+        delete img;
+    };
 
     Pyramid(ImageToProcess *img, int nOctaves, int nLayers)
         :  nOctaves(nOctaves), nLayers(nLayers), img(img) {};
