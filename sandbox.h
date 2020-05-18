@@ -44,7 +44,7 @@ public:
     int* sobelV2();
     int* descriptors(int nPoints);
     ImageToProcess moravek(int winSize, int nPoints);
-    int* harris(int winSize, int nPoints);
+    ImageToProcess harris(int winSize, int nPoints);
     void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
     void setShowResultsFlagTo(bool value) {showResults = value;}
     ConvolutionalTool* tool;

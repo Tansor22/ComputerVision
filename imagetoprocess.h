@@ -16,6 +16,8 @@ public:
     ~ImageToProcess();
     ImageToProcess(Canal type, double* data, int w, int h);
     ImageToProcess(QPixmap Pixmap, Canal type);
+    ImageToProcess(ImageToProcess *ipt);
+    ImageToProcess(Canal type, int w, int h);
     double shiftError(int winSize, int x, int y, int dx, int dy);
     double getValueSafe(int x, int y);
     void setValueSafe(int x, int y, double value);
@@ -23,6 +25,7 @@ public:
     int* toIntRGB();
     QImage toQImage();
     void derivativeX();
+    void save(QString fileName);
     void cross(double* kernel, int kernelW, int kernelH, double divider = 1.0);
     void gaussBlur(double sigma);
     void derivativeY();

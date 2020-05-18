@@ -12,14 +12,14 @@ int main(int argc, char *argv[])
     Sandbox* sb = new Sandbox(&w);
 
     // TODO: getImageViaFileDialog не использовать его нахуй!
-   //sb->getImageViaFileDialog();
+   sb->getImageViaFileDialog();
     //sb->calcPyramid(2, 3, 0, 1);
     //itp.derivativeY();
     //itp.gaussBlur(5.6);
-    sb->getImageViaFileName(BUTTERFLY);
+   // sb->getImageViaFileName(BUTTERFLY);
     //ImageToProcess itp = ImageToProcess(sb->imagePixmap, R |G |B | A);
     //int* result = sb->gaussBlurGray(2);
-    ImageToProcess marked = sb->moravek(5, 500);
+    ImageToProcess marked = sb->harris(5, 100);
    //int* result = sb->increaseSharpness();
     //int *result = sb->moravek(5, 400);//sb->harris(5, 800);//sb->moravek(5, 10);
     //sb->calcPyramid(3, 2, 0, 1);
@@ -30,5 +30,6 @@ int main(int argc, char *argv[])
     //sb->write(result);
     //itp.gaussBlur(6.4);
     sb->show(marked);
+    delete sb;
     return a.exec();
 }

@@ -123,9 +123,9 @@ int* Sandbox::gaussBlurGray(double sigma) {
     double* kernel =  Helper::gauss(sigma);
 
     tool = new SequentialConvolutionalTool(imagePixmap.width(),
-                                         imagePixmap.height(),
-                                         kernel,
-                                         size);
+                                           imagePixmap.height(),
+                                           kernel,
+                                           size);
 
     DataRetriver dr = DataRetriver(NULL);
 
@@ -272,48 +272,19 @@ int* Sandbox::sobel() {
 
     return result;
 }
-int* Sandbox::harris(int winSize, int nPoints) {
+ImageToProcess Sandbox::harris(int winSize, int nPoints) {
     int w = imagePixmap.width();
     int h = imagePixmap.height();
 
-    // do not display gauss
-    setShowResultsFlagTo(false);
-    // smoothing
-    int* smoothed = gaussBlurGray(1.3);
-    ImageToProcess toProcess = ImageToProcess();
-    // gray, w* h, 0.0 ... 1.0, smoothed
-    toProcess.setDoubles(GRAY, tool->getCanals(), w, h);
+    ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+    toProcess.gaussBlur(1.3);
 
     // searching derivatives
-    ImageToProcess dx, dy = ImageToProcess();
-    double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
-    };
-
-    ConvolutionalTool* temp = new SequentialConvolutionalTool(w, h, SOBEL_X, 3);
-
-    temp->process(BORDER, GRAY, smoothed);
-    // dx
-    double* derivativeX = Helper::copyOf(temp->getCanals(), w * h);
-    dx.setDoubles(GRAY, derivativeX, w, h);
-
-    double SOBEL_Y[] =  {
-        1.0, 2.0, 1.0,
-        0.0, 0.0, 0.0,
-        -1.0, -2.0, -1.0
-    };
-
-    temp->recharge(SOBEL_Y, 3);
-
-    temp->process(BORDER, GRAY, smoothed);
-    // dy
-    double* derivativeY = Helper::copyOf(temp->getCanals(), w * h);
-    dy.setDoubles(GRAY, derivativeY, w, h);
-
-    // no garbage collector
-    delete temp;
+    ImageToProcess dx = ImageToProcess(imagePixmap, GRAY), dy = ImageToProcess(imagePixmap, GRAY);
+    dx.derivativeX();
+    dy.derivativeY();
+    dy.save("Y");
+    dx.save("X");
 
     // derivatives have been found, proceeding
     double *a = new double [w * h];
@@ -355,7 +326,7 @@ int* Sandbox::harris(int winSize, int nPoints) {
         }
     }
 
-    ImageToProcess tempImg = ImageToProcess();
+    ImageToProcess tempItp = ImageToProcess(GRAY, w, h);
 
 
     // eigenvalues
@@ -367,35 +338,33 @@ int* Sandbox::harris(int winSize, int nPoints) {
             double L1 = (sc + sqrt(det)) / 2;
             double L2 = (sc - sqrt(det)) / 2;
             double cHarris = qMin(L1, L2);
-            tempImg.setValueSafe(i, j, cHarris);
+            tempItp.setValueSafe(i, j, cHarris);
         }
 
 
-    pois = tempImg.getPOIs(5, true);
+    pois = tempItp.getPOIs(5, true);
 
 
-    // write(target, "HARRIS_RESPOND");
+    tempItp.save("HARRIS_RESPOND");
 
     pois = ImageToProcess::filterPOIs(w, h, pois, nPoints);
 
-    ImageToProcess doubleRgb = ImageToProcess(imagePixmap, R | G | B);
+
+    ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
 
 
     // mark image
     int crossSize = 3;
     foreach (PointOfInterest point, pois) {
-        doubleRgb.setValueSafe(point.getX(), point.getY(), 1);
+        toMark.setValueSafe(point.getX(), point.getY(), 1);
         for (int i = 1; i <= crossSize; i++) {
-            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1);
-            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1);
-            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1);
-            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1);
+            toMark.setValueSafe(point.getX() - i, point.getY(), 1);
+            toMark.setValueSafe(point.getX() + i, point.getY(), 1);
+            toMark.setValueSafe(point.getX(), point.getY() - i, 1);
+            toMark.setValueSafe(point.getX(), point.getY() + i, 1);
         }
     }
-    int* result = Helper::toIntRGB(R | G | B, doubleRgb.doubleData , w * h);
-    setShowResultsFlagTo(true);
-    show(result);
-    return result;
+    return toMark;
 }
 
 ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
@@ -403,44 +372,43 @@ ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
     int h = imagePixmap.height();
     // do not display gauss
     ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
-    toProcess.gaussBlur(1.5);
+    toProcess.gaussBlur(1.3);
 
-    double* temp = new double[w * h];
-    for (int i = 0; i < h; i++) {
+    ImageToProcess temp = ImageToProcess(GRAY, w, h);
+    for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
             double min = __DBL_MAX__;
-            for (int dx = -1; dx <= 1; dx++) {
+            for (int dx = -1; dx <= 1; dx++)
                 for (int dy = -1; dy <= 1; dy++) {
                     if (dx != 0 && dy != 0) {
                         double c = toProcess.shiftError(winSize, i, j, dx, dy);
                         min = qMin(min, c);
                     }
                 }
-            }
-            temp[i * w + j] = min;
+            // ?? i j
+            temp.setValueSafe(j, i, min);
         }
-    }
-
+    temp.save("MORAVEC_RESPONSE.png");
     QList <PointOfInterest> points = toProcess.getPOIs(winSize);
 
     // target points
     points = ImageToProcess::filterPOIs(w, h, points, nPoints);
 
-    ImageToProcess doubleRgb = ImageToProcess(imagePixmap, R | G | B);
+    ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
 
 
-    // return marked image image
+    // return marked image
     int crossSize = 3;
     foreach (PointOfInterest point, points) {
-        doubleRgb.setValueSafe(point.getX(), point.getY(), 1.0);
+        toMark.setValueSafe(point.getX(), point.getY(), 1.0);
         for (int i = 1; i <= crossSize; i++) {
-            doubleRgb.setValueSafe(point.getX() - i, point.getY(), 1.0);
-            doubleRgb.setValueSafe(point.getX() + i, point.getY(), 1.0);
-            doubleRgb.setValueSafe(point.getX(), point.getY() - i, 1.0);
-            doubleRgb.setValueSafe(point.getX(), point.getY() + i, 1.0);
+            toMark.setValueSafe(point.getX() - i, point.getY(), 1.0);
+            toMark.setValueSafe(point.getX() + i, point.getY(), 1.0);
+            toMark.setValueSafe(point.getX(), point.getY() - i, 1.0);
+            toMark.setValueSafe(point.getX(), point.getY() + i, 1.0);
         }
     }
-    return doubleRgb;
+    return toMark;
 }
 void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
     double k = pow(2.0, 1.0 / (nLevels - 1)); // interval

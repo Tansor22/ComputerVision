@@ -4,6 +4,11 @@ double Helper::normalizeStraight(int rgb) {
     return rgb / 255.0;
 }
 
+double Helper::distance(double x1, double x2, double y1, double y2)
+{
+    return sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2));
+}
+
 QList<double> Helper::wrapInQList(double *arr, int size)
 {
     QList<double> wrapper = QList<double>();
@@ -49,6 +54,14 @@ double* Helper::sample(int sampleSize, double *data, int srcSize) {
     int to = from + sampleSize;
     return sample(from, to, data);
 }
+
+double* Helper::getZeroFilledArr(int size){
+    double* doubles = new double[size];
+    for(int i = 0; i < size; i++)
+        doubles[i] = 0.0;
+    return doubles;
+}
+
 void Helper::printSample(int from, int to, double *data) {
     double* toPrint = sample(from, to, data);
     std::string str = "";

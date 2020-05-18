@@ -17,6 +17,7 @@ public:
     static void printCanals(int *arr, int rows, int columns);
     static double* copyOf(double* arr, int size);
     static double normalizeStraight(int rgb);
+    static double distance(double x1, double x2, double y1, double y2);
     static QList<double> wrapInQList(double* arr, int size);
     static QList<QList<double>> wrapInQListPerCanal(Canal type, double* arr, int w, int h);
     static int* toIntRGB(Canal type, double* data, int size);
@@ -28,13 +29,13 @@ public:
     static double* sample(int from, int to, double* data);
     static double* sample(int sampleSize, double* data, int srcSize);
     static QString asQStringWithPrecision(double num, int precision) {return QString::number(num, 'f', precision);}
+    static double* getZeroFilledArr(int size);
     // templates
     template <typename T>
     // & means it will be mutated
     static void init(QList<T> &list, int size) {
-        for (int i = 0; i < size; i++)
-            list << 0;
-    }
+        for(int i = 0; i < size; i++) list << 0;
+    };
 };
 
 #endif // HELPER_H

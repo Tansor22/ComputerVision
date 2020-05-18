@@ -74,6 +74,10 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
     dr = DataRetriver(type, Helper::normalizeStraight);
     doubleData = dr.retriveData(rgbs, w, h);
 }
+
+ImageToProcess::ImageToProcess(Canal type, int w, int h) : type(type), w(w), h(h) {
+    doubleData = Helper::getZeroFilledArr(w * h * Helper::canalsCount(type));
+}
 int* ImageToProcess::toIntRGB() {
     return Helper::toIntRGB(type, doubleData, w * h);
 }
@@ -123,6 +127,12 @@ void ImageToProcess::derivativeX()
     double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
     // may return, not set
     setDoubles(type, derivativeX, w, h);
+    delete tool;
+}
+
+void ImageToProcess::save(QString fileName)
+{
+    toQImage().save(fileName + ".jpg", "JPG");
 }
 
 void ImageToProcess::derivativeY()
@@ -145,6 +155,7 @@ void ImageToProcess::derivativeY()
     double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
     // may return, not set
     setDoubles(type, derivativeX, w, h);
+    delete tool;
 }
 
 void ImageToProcess::gradient()
@@ -160,11 +171,8 @@ void ImageToProcess::gradient()
         -1.0, -2.0, -1.0
     };
     int size = 3;
-    ConvolutionalTool* tool = new SequentialConvolutionalTool(w,
-                                                              h,
-                                                              SOBEL_X,
-                                                              size,
-                                                              SOBEL_Y);
+    ConvolutionalTool* tool =
+            new SequentialConvolutionalTool(w, h, SOBEL_X, size, SOBEL_Y);
 
     int* data = toIntRGB();
     tool->process(BORDER, GRAY, data);
@@ -187,7 +195,9 @@ double ImageToProcess::getValueSafe(int x, int y) {
 void ImageToProcess::setValueSafe(int x, int y, double value) {
     // coorect out of bound
     if (x >= 0 && x < w && y > 0 && y < h){
-        doubleData[y * w + x] = value;
+        // for none single canal images
+        for (int c = 0; c < Helper::canalsCount(type); c++)
+            doubleData[(y * w + x) + w * h * c] = value;
     }
 }
 
@@ -204,7 +214,7 @@ double ImageToProcess::shiftError(int winSize, int x, int y, int dx, int dy) {
     return sum;
 }
 QList<PointOfInterest> ImageToProcess::getPOIs(ImageToProcess* img,  int winSize, bool isHarris) {
-    QList<PointOfInterest> points;
+    QList<PointOfInterest> pts;
 
     int w = img->w;
     int h = img->h;
@@ -212,40 +222,37 @@ QList<PointOfInterest> ImageToProcess::getPOIs(ImageToProcess* img,  int winSize
 
     // that's intentional
     double min = __DBL_MAX__, max = __DBL_MIN__;
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            double pixelValue = img->getValueSafe(i, j);
+    for (int i = 0; i < h; i++)
+        for (int j = 0; j < w; j++) {
+            double pixelValue = img->getValueSafe(j, i);
             if (max < pixelValue)
                 max = pixelValue;
             if (min > pixelValue)
                 min = pixelValue;
         }
-    }
 
     // specify threshold
     double threshold = min + (max - min) * 0.005;
     if (isHarris)
-        threshold = min + (max - min) * 0.004;
-    //qDebug() << min << " " << max << " " << threshold;
+        threshold *= 0.004;
 
     // the most powerful points will be added
-    for (int i = 0; i < h; i++) {
+    for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
-            bool is_correct = true;
-            double sLocal = img->getValueSafe(i, j);
-            for (int px = -halfSize; px <= halfSize && is_correct; px++) {
-                for (int py = -halfSize; py <= halfSize && is_correct; py++) {
-                    if (px != 0 || py != 0) {
-                        is_correct = sLocal > img->getValueSafe(i + px, j + py);
-                    }
-                }
-            }
-            if (is_correct && sLocal > threshold) {
-                points.append(PointOfInterest(i, j, sLocal));;
-            }
+            bool isCorrect = true;
+            double sLocal = img->getValueSafe(j, i);
+            for (int px = -halfSize; px <= halfSize && isCorrect; px++)
+                for (int py = -halfSize; py <= halfSize && isCorrect; py++)
+                    if (px != 0 || py != 0)
+                        // ?? j + py
+                        //?? i + px
+                        isCorrect = sLocal > img->getValueSafe(j + px, i + py);
+
+            if (isCorrect && sLocal > threshold)
+                pts << PointOfInterest(j, i, sLocal);
+
         }
-    }
-    return points;
+    return pts;
 }
 
 QList<PointOfInterest> ImageToProcess::getPOIs(int winSize, bool isHarris) {
@@ -256,15 +263,15 @@ QList<PointOfInterest> ImageToProcess::filterPOIs(QList<PointOfInterest> pointsI
 }
 QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInterest> pointsIn, int count)
 {
-    QList<PointOfInterest> points (pointsIn);
+    QList<PointOfInterest> pts (pointsIn);
 
     int r = 1;
 
     // while the amount of points is sufficient and radius is ok
-    while (points.size() > count && r < w / 2 && r < h / 2) {
-        points.erase(std::remove_if(points.begin(), points.end(),
-                                    [&](const PointOfInterest& curPoint) {
-            for (const PointOfInterest& point : points) {
+    while (pts.size() > count && r < w / 2 && r < h / 2) {
+        pts.erase(std::remove_if(pts.begin(), pts.end(),
+                                 [&](const PointOfInterest& curPoint) {
+            for (const PointOfInterest& point : pts) {
                 double dst = PointOfInterest::distance(point, curPoint);
                 // points quite close and the second one is more powerfull
                 if (dst < r && curPoint.getC() < point.getC()) {
@@ -272,10 +279,10 @@ QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInt
                 }
             }
             return false;
-        }), points.end());
+        }), pts.end());
         r++;
     }
-    return points;
+    return pts;
 }
 
 double *ImageToProcess::getDoubles() const
