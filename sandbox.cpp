@@ -27,8 +27,8 @@ void Sandbox::show(QRgb*pixels, int w, int h) const {
     }
 }
 
-void Sandbox::show(ImageToProcess itp) const {
-    show(itp.toIntRGB(), itp.w, itp.h);
+void Sandbox::show(ImageToProcess* itp) const {
+    show(itp->toIntRGB(), itp->w, itp->h);
 }
 void Sandbox::getImageViaFileName(const QString& fn)  {
     fileName = fn;
@@ -181,16 +181,16 @@ QRgb* Sandbox::sobel() const {
 
     return result;
 }
-ImageToProcess Sandbox::harris(int winSize, int nPoints) const {
-    ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+ImageToProcess* Sandbox::harris(int winSize, int nPoints) const {
+    ImageToProcess* toProcess = new ImageToProcess(imagePixmap, GRAY);
     // blur it a bit
-    toProcess.gaussBlur(1.3);
+    toProcess->gaussBlur(1.3);
 
     QList <PointOfInterest> pois =
             PoisHandler::handle(PoisHandler::HARRIS, toProcess, winSize, nPoints);
 
 
-    ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
+    ImageToProcess* toMark = new ImageToProcess(imagePixmap, R | G | B);
 
 
     // mark image
@@ -198,16 +198,16 @@ ImageToProcess Sandbox::harris(int winSize, int nPoints) const {
     return toMark;
 }
 
-ImageToProcess Sandbox::moravec(int winSize, int nPoints) const {
-    ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+ImageToProcess* Sandbox::moravec(int winSize, int nPoints) const {
+    ImageToProcess* toProcess = new ImageToProcess(imagePixmap, GRAY);
     // blur it a bit
-    toProcess.gaussBlur(1.3);
+    toProcess->gaussBlur(1.3);
 
     QList <PointOfInterest> pois =
             PoisHandler::handle(PoisHandler::MORAVEC, toProcess, winSize, nPoints);
 
 
-    ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
+    ImageToProcess* toMark = new ImageToProcess(imagePixmap, R | G | B);
 
     // return marked image
     ImageHandler::markWithWhite(toMark, pois);
@@ -269,21 +269,25 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
 }
 
 QRgb* Sandbox::descriptors(int nPoints, Distortion* distortion) {
-    ImageToProcess itp = new ImageToProcess(imagePixmap, GRAY);
-    itp.setName("outer");
+    ImageToProcess *itp = new ImageToProcess(imagePixmap, R | G | B);
+    itp->setName("Target");
     QList <PointOfInterest> itpPois =
             PoisHandler::handle(PoisHandler::HARRIS, itp, 3, nPoints, true);
 
     // getting not rotated
     //getImageViaFileName(fileName);
 
+    //assert(itpPois.size() > 0  && "itpPois is empty");
+    qDebug() << "tr";
     // mutate imagePixmap, further addressing to imagePixmap would be to rotated
+    //getImageViaFileName(fileName);
     imagePixmap = distortion->distort(imagePixmap);
 
 
-    ImageToProcess distorted = ImageToProcess(imagePixmap, GRAY);
+    ImageToProcess* distorted = new ImageToProcess(imagePixmap, R | G | B);
     QList <PointOfInterest> distortedPois =
             PoisHandler::handle(PoisHandler::HARRIS, distorted, 3, nPoints, true);
+    assert(distortedPois.size() > 0 && "distortedPois is empty");
     // distances between descriptors of images
     auto *distances = new double[itpPois.size() * distortedPois.size()];
 
@@ -305,16 +309,8 @@ QRgb* Sandbox::descriptors(int nPoints, Distortion* distortion) {
                 max = distance;
         }
 
-
-    mid /= itpPois.size() * distortedPois.size();
-    //qDebug()<<"MinDistance: " << min <<" MaxDistance: " << max << "mid: " << mid;
-
     QImage joined = ImageHandler::join(itp, distorted);
-//    QPixmap px(itp.getW() + rotated.getW(), qMax(itp.getH(), rotated.getH()));
-//    QPainter pJoin(&px);
-//    pJoin.drawImage(0, 0, itp.toQImage());
-//    pJoin.drawImage(itp.getW(), 0, rotated.toQImage());
-//    QImage joined = px.toImage();
+
     QPainter p (&joined);
     p.setPen(QColor(255, 255, 255, 160));
     // mark source image with its pois
@@ -357,45 +353,46 @@ QRgb* Sandbox::descriptors(int nPoints, Distortion* distortion) {
         double NNDR = firstMin / secondMin;
         double NNDR2 = firstMin2 / secondMin2;
         // TODO play on param
-        double T = .6;
+        double T = .8;
         if (NNDR < T && NNDR2 < T && firstMin < max * 0.3) {
+            qDebug() << "mark";
             // match
             QRgb rgb = Helper::supplyWithRGB();
             int crossSize = 3;
             // source image
-            itp.setValueSafe(itpPois[i].getX(), itpPois[i].getY(), rgb);
-            for (int i = 1; i <= crossSize; i++) {
-                itp.setValueSafe(itpPois[i].getX() - i,
+            itp->setValueSafe(itpPois[i].getX(), itpPois[i].getY(), rgb);
+            for (int m = 1; m <= crossSize; m++) {
+                itp->setValueSafe(itpPois[i].getX() - m,
                                  itpPois[i].getY(), rgb);
-                itp.setValueSafe(itpPois[i].getX() + i,
+                itp->setValueSafe(itpPois[i].getX() + m,
                                  itpPois[i].getY(), rgb);
-                itp.setValueSafe(itpPois[i].getX(),
-                                 itpPois[i].getY() - i, rgb);
-                itp.setValueSafe(itpPois[i].getX(),
-                                 itpPois[i].getY() + i, rgb);
+                itp->setValueSafe(itpPois[i].getX(),
+                                 itpPois[i].getY() - m, rgb);
+                itp->setValueSafe(itpPois[i].getX(),
+                                 itpPois[i].getY() + m, rgb);
             }
             // rotated image
-            distorted.setValueSafe(distortedPois[i].getX(), distortedPois[i].getY(), rgb);
-            for (int i = 1; i <= crossSize; i++) {
-                distorted.setValueSafe(distortedPois[firstMin].getX() - i,
+            distorted->setValueSafe(distortedPois[i].getX(), distortedPois[i].getY(), rgb);
+            for (int m = 1; m <= crossSize; m++) {
+                distorted->setValueSafe(distortedPois[firstMin].getX() - m,
                                      distortedPois[firstMin].getY(), rgb);
-                distorted.setValueSafe(distortedPois[firstMin].getX() + i,
+                distorted->setValueSafe(distortedPois[firstMin].getX() + m,
                                      distortedPois[firstMin].getY(), rgb);
-                distorted.setValueSafe(distortedPois[firstMin].getX(),
-                                     distortedPois[firstMin].getY() - i, rgb);
-                distorted.setValueSafe(distortedPois[firstMin].getX(),
-                                     distortedPois[firstMin].getY() + i, rgb);
+                distorted->setValueSafe(distortedPois[firstMin].getX(),
+                                       distortedPois[firstMin].getY() - m, rgb);
+                distorted->setValueSafe(distortedPois[firstMin].getX(),
+                                       distortedPois[firstMin].getY() + m, rgb);
             }
             // draw a link
             p.drawLine(itpPois[i].getX(), itpPois[i].getY(),
-                       distortedPois[firstMin].getX() + itp.getW(), distortedPois[firstMin].getY());
+                       distortedPois[firstMin].getX() + itp->getW(), distortedPois[firstMin].getY());
         }
         // matching ends
     }
      // save results
     joined.save("JOINED.jpg", "JPG");
-    itp.save("SOURCE");
-    distorted.save("ROTATED");
+    itp->save("SOURCE");
+    distorted->save("ROTATED");
 
     qDebug() << "end descriptors" << endl;
     return 0;

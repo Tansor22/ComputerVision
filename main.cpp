@@ -4,6 +4,8 @@
 #include "imagehandler.h"
 #include "Identity.h"
 #include "Rotate.h"
+#include "Contrast.h"
+#include "Shift.h"
 
 const QString BUTTERFLY = "C:/Users/Sergei/Documents/QtProjects/images/butterfly.jpg";
 const QString CAPPED_GIRL = "C:/Users/Sergei/Documents/QtProjects/images/2.jpg";
@@ -30,24 +32,31 @@ int main(int argc, char *argv[]) {
     MainForm w;
     Sandbox *sb = new Sandbox(&w);
     // Custom
-    /*
+
     sb->getImageViaFileName(HOCKEY);
-    ImageToProcess i = new ImageToProcess(sb->imagePixmap, GRAY);
-    i.gradient();
+    /*
+    ImageToProcess* i = new ImageToProcess(sb->imagePixmap, GRAY);
+    ImageToProcess* i2 = new ImageToProcess(i);
+    i->gradient();
+    delete i;
     sb->show(i);
      */
+
 
     //demoSobel(sb);
 
     //demoGauss(sb);
 
-    demoMoravec(sb);
+    //demoMoravec(sb);
 
     //demoHarris(sb);
 
     //demoPyramids(sb);
 
     //demoDescriptors(sb, new Identity());
+    //demoDescriptors(sb, new Contrast(256));
+    //demoDescriptors(sb, new Rotate(15));
+    demoDescriptors(sb, new Shift(40, 0));
 
     //demoDescriptors(sb, new Rotate(15));
     delete sb;
@@ -76,13 +85,13 @@ void demoDescriptors(Sandbox *sb, Distortion *distortion) {
 
 void demoHarris(Sandbox *sb) {
     sb->getImageViaFileDialog();
-    ImageToProcess toShow = sb->harris(3, 100);
+    ImageToProcess* toShow = sb->harris(3, 100);
     sb->show(toShow);
 }
 
 void demoMoravec(Sandbox *sb) {
     sb->getImageViaFileDialog();
-    ImageToProcess toShow = sb->moravec(3, 100);
+    ImageToProcess* toShow = sb->moravec(3, 100);
     sb->show(toShow);
 }
 

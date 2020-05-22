@@ -56,15 +56,33 @@ ImageToProcess::ImageToProcess()
 {
 
 }
-
+/*
 ImageToProcess::~ImageToProcess()
 {
-    //delete[] doubleData;
+    delete[] doubleData;
 }
+ */
 
 ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
 {
     setDoubles(type, Helper::copyOf(data, w * h), w, h);
+}
+
+ImageToProcess::ImageToProcess(ImageToProcess *itp, Canal type) : type(type){
+    if (type == itp->type) {
+        // ok
+        setDoubles(itp->type,
+                   Helper::copyOf(itp->doubleData,
+                                  itp->w * itp->h * Helper::canalsCount(itp->type))
+                , itp->w, itp->h);
+    } else if (Helper::isGray(type) && Helper::isRgb(itp->type)) {
+        // rgb(a) -> to gray, ok
+        DataRetriever dr = DataRetriever(GRAY, Helper::normalizeStraight);
+        double* doubles = dr.retrieveData(itp->toIntRGB(), itp->w, itp->h);
+        setDoubles(type, doubles, itp->w, itp->h);
+    } else {
+        throw "Couldn't convert gray image to RGB!";
+    }
 }
 
 ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
@@ -165,11 +183,11 @@ void ImageToProcess::gradient()
     setDoubles(type, tool->getCanals(), w, h);
 }
 
-void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
-    this->doubleData = doubleData;
-    this->type = type;
-    this->w = w;
-    this->h = h;
+void ImageToProcess::setDoubles(Canal t, double *dD, int W, int H) {
+    doubleData = dD;
+    type = t;
+    w = W;
+    h = H;
 }
 double ImageToProcess::getValueSafe(int x, int y) {
     // correct out of bound
@@ -295,7 +313,7 @@ void ImageToProcess::downSample() {
 
 }
 
-void ImageToProcess::setName(const QString &value)
+void ImageToProcess::setName(const std::string &value)
 {
     name = value;
 }

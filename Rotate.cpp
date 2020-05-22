@@ -7,5 +7,6 @@
 QPixmap Rotate::distort(QPixmap pixmap) {
     QMatrix rm;
     rm.rotate(degrees);
-    return pixmap.transformed(rm);
+    QPixmap output = pixmap.transformed(rm);
+    return output;
 }

@@ -27,7 +27,7 @@ public:
     void getImageViaFileDialog();
     void getImageViaFileName(const QString& fn);
     void show(QRgb* pixels = nullptr, int w = -1, int h = -1) const;
-    void show(ImageToProcess itp) const;
+    void show(ImageToProcess* itp) const;
     void write(QRgb*pixels, const QString& fn = "newImage", int w = -1, int h = -1) const;
     void write(ImageToProcess itp, QString fn = "newImage") const;
     // logic
@@ -39,8 +39,8 @@ public:
     QRgb* sobel() const;
     QRgb* sobelV2() const;
     QRgb* descriptors(int nPoints, Distortion* distortion);
-    ImageToProcess moravec(int winSize, int nPoints) const;
-    ImageToProcess harris(int winSize, int nPoints) const;
+    ImageToProcess* moravec(int winSize, int nPoints) const;
+    ImageToProcess* harris(int winSize, int nPoints) const;
     void calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0);
     void setShowResultsFlagTo(bool value) {showResults = value;}
 private:

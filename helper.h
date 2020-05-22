@@ -25,6 +25,7 @@ public:
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);
     static bool isGray(Canal type) {return (GRAY & type ) == GRAY; }
+    static bool isRgb(Canal type);
     static double* getDoublesTupleForCanals(Canal canals, QRgb rgb, bool normalize = true);
     static int canalsCount(Canal type) {return isGray(type) ? 1 : noAlpha(type) ? 3 : 4;}
     static bool noAlpha(Canal type) {return (A & type ) != A; }

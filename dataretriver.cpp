@@ -1,6 +1,6 @@
 #include "dataretriver.h"
 
-// retrives data from QPixmap, QImage, and canals value from rgb int array
+// retrieves data from QPixmap, QImage, and canals value from rgb int array
 double DataRetriever::map(QRgb rgb) {
     return mapper != 0 ? mapper(rgb) : (double) rgb;
 }
@@ -145,9 +145,6 @@ double* DataRetriever::retrieveData(QRgb* arr, int w, int h) {
             if ((A & canals ) == A)
                 data[(i * w + j) + w * h * canalI] = map(qAlpha(rgb));
              else data[(i * w + j) + w * h * canalI] = map(255);
-
-            // reset canal
-            canalI = 0;
         }
     return data;
 }

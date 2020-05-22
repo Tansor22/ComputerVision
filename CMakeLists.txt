@@ -44,7 +44,7 @@ add_executable(ImageProcessing
         sandbox.h
         sequentialconvolutiontool.cpp
         sequentialconvolutiontool.h
-        ui_mainform.h CppDemo.cpp CppDemo.h Distortion.cpp Distortion.h Rotate.cpp Rotate.h Identity.cpp Identity.h KernelsHandler.cpp KernelsHandler.h)
+        ui_mainform.h CppDemo.cpp CppDemo.h Distortion.cpp Distortion.h Rotate.cpp Rotate.h Identity.cpp Identity.h KernelsHandler.cpp KernelsHandler.h Contrast.cpp Contrast.h Shift.cpp Shift.h)
 
 # Link Qt libraries to the exe's
 target_link_libraries(ImageProcessing Qt5::Core Qt5::Widgets Qt5::Gui)

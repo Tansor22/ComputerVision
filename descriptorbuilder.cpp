@@ -1,9 +1,7 @@
 #include "descriptorbuilder.h"
 
 DescriptorBuilder::DescriptorBuilder(ImageToProcess *itp, int nBaskets, int nHistograms, int gridSize)
-    : nBaskets(nBaskets), nHistograms(nHistograms), gridSize(gridSize) {
-    int w = itp->getW();
-    int h = itp->getH();
+    : nBaskets(nBaskets), nHistograms(nHistograms), gridSize(gridSize), w(itp->getW()), h(itp->getH()) {
 
     // searching for gradient
     gradient = new ImageToProcess(itp, ImageToProcess::BLACK);
@@ -27,9 +25,17 @@ DescriptorBuilder::DescriptorBuilder(ImageToProcess *itp, int nBaskets, int nHis
 
     //Sandbox::write(*gradientDirection, "gradientDirection");
 
-    // TODO to check whether it's correct
-    gaussKernel = Helper::gauss(gridSize / 6);
+    double sigma = static_cast<double>(gridSize) / 6;
+    int halfSize = gridSize / 2;
+    gaussKernel = new double[(gridSize + 1) * (gridSize + 1)];
 
+    double ss2 = sigma * sigma;
+    double c = 1 / (2 * M_PI * ss2);
+    double divider = 2 * ss2;
+
+    for (int u = -halfSize; u <= halfSize; u++)
+        for (int v = -halfSize; v <= halfSize; v++)
+            gaussKernel[(u + halfSize) * gridSize + (v  + halfSize)] = c * exp(- (u * u + v * v) / divider);
 }
 
 Descriptor DescriptorBuilder::buildDescriptor(PointOfInterest inputPoint)
@@ -133,14 +139,14 @@ QList<PointOfInterest> DescriptorBuilder::calcOrientPoints(QList<PointOfInterest
 {
     QList<PointOfInterest> orientPoints;
 
-    int localnBaskets = 36;
-    double localBasketSize = 360.0 / localnBaskets;
+    int localNBaskets = 36;
+    double localBasketSize = 360.0 / localNBaskets;
     int descriptorRadius = gridSize / 2;
 
     for(int index = 0; index < points.size(); index++) {
 
-        double localBaskets[localnBaskets];
-        for (int i = 0; i < localnBaskets; i++){
+        double localBaskets[localNBaskets];
+        for (int i = 0; i < localNBaskets; i++){
             localBaskets[i] = 0;
         }
 
@@ -157,16 +163,16 @@ QList<PointOfInterest> DescriptorBuilder::calcOrientPoints(QList<PointOfInterest
 
                     double localBasketCenter = static_cast<double>(basketNumber * localBasketSize) + localBasketSize / 2.0;
 
-                    int relatedbasketNumber;
+                    int relatedBasketNumber;
                     if(direction < localBasketCenter)
-                        relatedbasketNumber = basketNumber - 1;
+                        relatedBasketNumber = basketNumber - 1;
                     else
-                        relatedbasketNumber = basketNumber + 1;
+                        relatedBasketNumber = basketNumber + 1;
 
-                    if (relatedbasketNumber < 0)
-                        relatedbasketNumber = localnBaskets - 1;
-                    if (relatedbasketNumber > localnBaskets - 1)
-                        relatedbasketNumber = 0;
+                    if (relatedBasketNumber < 0)
+                        relatedBasketNumber = localNBaskets - 1;
+                    if (relatedBasketNumber > localNBaskets - 1)
+                        relatedBasketNumber = 0;
 
 
                     double thisCenterDistance = abs(localBasketCenter - direction);
@@ -179,10 +185,10 @@ QList<PointOfInterest> DescriptorBuilder::calcOrientPoints(QList<PointOfInterest
                             * gaussKernel[(i + descriptorRadius) * gridSize + (j  + descriptorRadius)];
 
 
-                    localBaskets[relatedbasketNumber] += gradient->getValueSafe(points[index].getX() + i,
+                    localBaskets[relatedBasketNumber] += gradient->getValueSafe(points[index].getX() + i,
                                                                                 points[index].getY() + j)
-                            * (1 - relatedCenterDistance / localBasketSize)
-                            * gaussKernel[(i + descriptorRadius) * gridSize + (j  + descriptorRadius)];
+                                                         * (1 - relatedCenterDistance / localBasketSize)
+                                                         * gaussKernel[(i + descriptorRadius) * gridSize + (j  + descriptorRadius)];
                 }
             }
         }
@@ -192,7 +198,7 @@ QList<PointOfInterest> DescriptorBuilder::calcOrientPoints(QList<PointOfInterest
         double secondMax = -1;
         int secondMaxI = -1;
 
-        for(int i = 0; i < localnBaskets; i++){
+        for(int i = 0; i < localNBaskets; i++){
             if(localBaskets[i] > firstMax){
                 secondMax = firstMax;
                 secondMaxI = firstMaxI;

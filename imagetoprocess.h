@@ -22,17 +22,18 @@ public:
         SPREAD
     };
     ImageToProcess();
-    ~ImageToProcess();
+    //~ImageToProcess();
     ImageToProcess(Canal type, double* data, int w, int h);
     ImageToProcess(QPixmap Pixmap, Canal type);
-    ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy = EDGE);
+    explicit ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy = EDGE);
+    ImageToProcess(ImageToProcess *itp, Canal type);
     ImageToProcess(Canal type, int w, int h);
     double shiftError(int winSize, int x, int y, int dx, int dy);
     double getValueSafe(int x, int y);
     double operator[](int i) const;
     void setValueSafe(int x, int y, double value);
     void setValueSafe(int x, int y, QRgb rgb);
-    void setDoubles(Canal type, double* doubleData, int w, int h);
+    void setDoubles(Canal t, double* dD, int W, int H);
     QRgb* toIntRGB();
     QImage toQImage();
     void derivativeX();
@@ -51,7 +52,7 @@ public:
     int h = 0;
     Canal type;
     OutOfBoundPolicy oobp = EDGE;
-    QString name;
+    std::string name = "";
 
 
     int getW() const;
@@ -59,7 +60,7 @@ public:
     double *getDoubles() const;
     Canal getType() const;
     void setType(const Canal &value);
-    void setName(const QString &value);
+    void setName(const std::string &value);
 };
 
 #endif // IMAGETOPROCESS_H
