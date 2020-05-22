@@ -1,4 +1,5 @@
 #include "imagetoprocess.h"
+
 void ImageToProcess::cross(double* kernel, int kernelW, int kernelH, double divider) {
     // data required by calculation
     int ku = kernelH / 2;
@@ -56,7 +57,7 @@ ImageToProcess::ImageToProcess()
 
 ImageToProcess::~ImageToProcess()
 {
-    delete[] doubleData;
+    //delete[] doubleData;
 }
 
 ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
@@ -73,6 +74,14 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
     // remove second arg and gets values in 0.0 ... 255.0, otherwise 0.0 ... 1.0
     dr = DataRetriver(type, Helper::normalizeStraight);
     doubleData = dr.retriveData(rgbs, w, h);
+}
+
+ImageToProcess::ImageToProcess(ImageToProcess *itp)
+{
+    setDoubles(itp->type,
+               Helper::copyOf(itp->doubleData,
+                              itp->w * itp->h * Helper::canalsCount(itp->type))
+               , itp->w, itp->h);
 }
 
 ImageToProcess::ImageToProcess(Canal type, int w, int h) : type(type), w(w), h(h) {
@@ -187,9 +196,40 @@ void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
 }
 double ImageToProcess::getValueSafe(int x, int y) {
     // coorect out of bound
-    int i = y <= 0 ? 0 : (y >= h - 1 ? h - 1 : y);
-    int j = x <= 0 ? 0 : (x >= w - 1 ? w - 1 : x);
-    return doubleData[i * w + j];
+    switch (oobp) {
+        case EDGE: {
+            int i = y <= 0 ? 0 : (y >= h - 1 ? h - 1 : y);
+            int j = x <= 0 ? 0 : (x >= w - 1 ? w - 1 : x);
+            return doubleData[i * w + j];
+        }
+        case BLACK: {
+            return (x >= 0 && x <= w - 1 && y >= 0 && y <= h - 1) ? doubleData[y * w + x] : 0.0;
+            }
+        case WHITE: {
+            return (x >= 0 && x <= w - 1 && y >= 0 && y <= h - 1) ? doubleData[y * w + x] : 1.0;
+        }
+        case SPREAD: {
+            int i = y, j = x;
+            // x coordinat
+            if( x < 0)
+                j += h;
+            else if( x >= h)
+                j -= h;
+            // y coordinat
+            if( y < 0)
+                i += w;
+            else if( y >= w)
+                i -= w;
+            return doubleData[i * w + j];
+
+        }
+    }
+}
+
+// for debug
+double ImageToProcess::operator[](int i) const
+{
+    return doubleData[i];
 }
 
 void ImageToProcess::setValueSafe(int x, int y, double value) {
@@ -198,6 +238,17 @@ void ImageToProcess::setValueSafe(int x, int y, double value) {
         // for none single canal images
         for (int c = 0; c < Helper::canalsCount(type); c++)
             doubleData[(y * w + x) + w * h * c] = value;
+    }
+}
+
+void ImageToProcess::setValueSafe(int x, int y, QRgb rgb)
+{
+    double* doubleValues = Helper::getDoublesTupleForCanals(type, rgb);
+    // coorect out of bound
+    if (x >= 0 && x < w && y > 0 && y < h){
+        // for none single canal images
+        for (int c = 0; c < Helper::canalsCount(type); c++)
+            doubleData[(y * w + x) + w * h * c] = doubleValues[c];
     }
 }
 
@@ -213,76 +264,12 @@ double ImageToProcess::shiftError(int winSize, int x, int y, int dx, int dy) {
     }
     return sum;
 }
-QList<PointOfInterest> ImageToProcess::getPOIs(ImageToProcess* img,  int winSize, bool isHarris) {
-    QList<PointOfInterest> pts;
-
-    int w = img->w;
-    int h = img->h;
-    int halfSize = winSize / 2;
-
-    // that's intentional
-    double min = __DBL_MAX__, max = __DBL_MIN__;
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++) {
-            double pixelValue = img->getValueSafe(j, i);
-            if (max < pixelValue)
-                max = pixelValue;
-            if (min > pixelValue)
-                min = pixelValue;
-        }
-
-    // specify threshold
-    double threshold = min + (max - min) * 0.005;
-    if (isHarris)
-        threshold *= 0.004;
-
-    // the most powerful points will be added
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++) {
-            bool isCorrect = true;
-            double sLocal = img->getValueSafe(j, i);
-            for (int px = -halfSize; px <= halfSize && isCorrect; px++)
-                for (int py = -halfSize; py <= halfSize && isCorrect; py++)
-                    if (px != 0 || py != 0)
-                        // ?? j + py
-                        //?? i + px
-                        isCorrect = sLocal > img->getValueSafe(j + px, i + py);
-
-            if (isCorrect && sLocal > threshold)
-                pts << PointOfInterest(j, i, sLocal);
-
-        }
-    return pts;
-}
 
 QList<PointOfInterest> ImageToProcess::getPOIs(int winSize, bool isHarris) {
-    return getPOIs(this, winSize, isHarris);
+    return PoisHandler::getPOIs(this, winSize, isHarris);
 }
 QList<PointOfInterest> ImageToProcess::filterPOIs(QList<PointOfInterest> pointsIn, int count) {
-    return filterPOIs(this->w, this->h, pointsIn, count);
-}
-QList<PointOfInterest> ImageToProcess::filterPOIs(int w, int h, QList<PointOfInterest> pointsIn, int count)
-{
-    QList<PointOfInterest> pts (pointsIn);
-
-    int r = 1;
-
-    // while the amount of points is sufficient and radius is ok
-    while (pts.size() > count && r < w / 2 && r < h / 2) {
-        pts.erase(std::remove_if(pts.begin(), pts.end(),
-                                 [&](const PointOfInterest& curPoint) {
-            for (const PointOfInterest& point : pts) {
-                double dst = PointOfInterest::distance(point, curPoint);
-                // points quite close and the second one is more powerfull
-                if (dst < r && curPoint.getC() < point.getC()) {
-                    return true;
-                }
-            }
-            return false;
-        }), pts.end());
-        r++;
-    }
-    return pts;
+    return PoisHandler::filterPOIs(this->w, this->h, pointsIn, count);
 }
 
 double *ImageToProcess::getDoubles() const
@@ -328,5 +315,20 @@ void ImageToProcess::downsample() {
 
     delete [] oldDoubleData;
 
+}
+
+void ImageToProcess::setName(const QString &value)
+{
+    name = value;
+}
+
+Canal ImageToProcess::getType() const
+{
+    return type;
+}
+
+void ImageToProcess::setType(const Canal &value)
+{
+    type = value;
 }
 

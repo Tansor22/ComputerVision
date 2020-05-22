@@ -22,7 +22,6 @@ public:
     QString fileName;
     QPixmap imagePixmap;
     double* doubles;
-    QList<PointOfInterest> pois;
     // meta
     Sandbox(MainForm* form) : form(form){};
     Sandbox();

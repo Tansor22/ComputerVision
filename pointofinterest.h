@@ -1,6 +1,9 @@
 #ifndef POINTOFINTEREST_H
-#include <qmath.h>
 #define POINTOFINTEREST_H
+
+#include "descriptor.h"
+
+#include <qmath.h>
 
 
 class PointOfInterest
@@ -20,9 +23,17 @@ public:
 
     static double distance (PointOfInterest a, PointOfInterest b);
 
+    double getAngle() const;
+    void setAngle(double value);
+
+    Descriptor getDescriptor() const;
+    void setDescriptor(const Descriptor &value);
+
 private:
     int x, y;
     double c;
+    double angle;
+    Descriptor descriptor;
 };
 
 #endif // POINTOFINTEREST_H

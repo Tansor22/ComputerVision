@@ -8,14 +8,12 @@ class Descriptor
 {
 public:
     int nBaskets;   // baskets number per historam
-    int nHistogram;
+    int nHistograms;
     QList<double> histograms = QList<double>();
 
 public:
-    Descriptor(int nBaskets, int nHistogram) : nBaskets(nBaskets), nHistogram(nHistogram) {
-        Helper::init<double>(histograms, nBaskets * nHistogram * nHistogram);
-    };
-    Descriptor(): nBaskets(0), nHistogram(0) {};
+    Descriptor(int nBaskets, int nHistograms);
+    Descriptor(): nBaskets(0), nHistograms(0) {};
 
     double getBasket (int hist, int basket) { return histograms[hist * nBaskets + basket];};
     void setBasket (int hist, int basket, double value) {histograms[hist * nBaskets + basket] = value;};
@@ -23,8 +21,9 @@ public:
     void setHistograms(const QList<double> &value) {histograms = value;};
     int getBaskets() const {return nBaskets;};
     void setBaskets(int value) {nBaskets = value;};
-    int getNHistogram() const {return nHistogram;};
-    void setNHistogram(int value) {nHistogram = value;};
+    int getNHistograms() const {return nHistograms;};
+    void setNHistograms(int value) {nHistograms = value;};
+    double distance(Descriptor d);
 
     // implemented outside
     QString asQString();

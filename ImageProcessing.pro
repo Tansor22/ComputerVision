@@ -21,12 +21,14 @@ SOURCES += \
     descriptor.cpp \
     descriptorbuilder.cpp \
     helper.cpp \
+    imagehandler.cpp \
     imagetoprocess.cpp \
     ipworker.cpp \
     main.cpp \
     mainform.cpp \
     parallelconvolutionaltool.cpp \
     pointofinterest.cpp \
+    poishandler.cpp \
     sandbox.cpp \
     sequentialconvolutionaltool.cpp
 
@@ -37,12 +39,14 @@ HEADERS += \
     descriptor.h \
     descriptorbuilder.h \
     helper.h \
+    imagehandler.h \
     imagetoprocess.h \
     ipworker.h \
     mainform.h \
     octave.h \
     parallelconvolutionaltool.h \
     pointofinterest.h \
+    poishandler.h \
     pyramid.h \
     sandbox.h \
     sequentialconvolutionaltool.h

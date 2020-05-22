@@ -1,5 +1,20 @@
 #include "descriptor.h"
 
+Descriptor::Descriptor(int nBaskets, int nHistogram): nBaskets(nBaskets), nHistograms(nHistogram) {
+    Helper::init<double>(histograms, nBaskets * nHistogram * nHistogram);
+}
+
+double Descriptor::distance(Descriptor d)
+{
+    double sum = 0;
+    for(int i = 0; i < nHistograms; i++){
+        for(int j = 0; j < nBaskets; j++){
+            sum += pow((getBasket(i, j) - d.getBasket(i,j)), 2);
+        }
+    }
+    return sqrt(sum);
+}
+
 void Descriptor::normalize()
 {
     double size = 0;

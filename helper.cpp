@@ -55,6 +55,14 @@ double* Helper::sample(int sampleSize, double *data, int srcSize) {
     return sample(from, to, data);
 }
 
+QRgb Helper::supplyWithRGB()
+{
+    int r = (rand() % 256);
+    int g = (rand() % 256);
+    int b = (rand() % 256);
+    return qRgb(r, g, b);
+}
+
 double* Helper::getZeroFilledArr(int size){
     double* doubles = new double[size];
     for(int i = 0; i < size; i++)
@@ -63,6 +71,12 @@ double* Helper::getZeroFilledArr(int size){
 }
 
 void Helper::printSample(int from, int to, double *data) {
+
+    qDebug() << gs(from, to, data) << endl;
+}
+
+QString Helper::gs(int from, int to, double *data)
+{
     double* toPrint = sample(from, to, data);
     std::string str = "";
     int elems = 0;
@@ -71,7 +85,7 @@ void Helper::printSample(int from, int to, double *data) {
         str += std::to_string(toPrint[i]) + " ";
         if (++elems > ELEMS_IN_LINE) { str += "\t\n"; elems = 0;};
     }
-    qDebug() << str.c_str() << endl;
+    return str.c_str();
 }
 void Helper::printSample(int sampleSize, double *data, int srcSize) {
     double* toPrint = sample(sampleSize, data, srcSize);
@@ -108,6 +122,35 @@ double* Helper::gauss(double sigma) {
 
     //Helper::printAs2D(matrix_gauss, size, size);
     return matrix_gauss;
+}
+
+double *Helper::getDoublesTupleForCanals(Canal canals, QRgb rgb, bool normalize)
+{
+    double* tuple = new double[canalsCount(canals)];
+    if (isGray(canals)) {
+        // single value
+        int gray = qGray(rgb);
+        tuple[0] = normalize ? normalizeStraight(gray) : gray;
+    } else {
+        int canalI = 0;
+        if ((R & canals ) == R) {
+            int r = qRed(rgb);
+            tuple[canalI++] = normalize ? normalizeStraight(r) : r;;
+        }
+        if ((G & canals ) == G) {
+            int g = qGreen(rgb);
+            tuple[canalI++] = normalize ? normalizeStraight(g) : g;;
+        }
+        if ((B & canals ) == B) {
+            int b = qBlue(rgb);
+            tuple[canalI++] = normalize ? normalizeStraight(b) : b;;
+        }
+        if ((A & canals ) == A) {
+            int a = qAlpha(rgb);
+            tuple[canalI++] = normalize ? normalizeStraight(a) : a;;
+        }
+    }
+    return tuple;
 }
 
 int* Helper::toIntRGB(Canal type, double *data, int size) {

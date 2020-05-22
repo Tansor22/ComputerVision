@@ -14,3 +14,23 @@ double PointOfInterest::distance(PointOfInterest a, PointOfInterest b)
     double yd = a.getY() - b.getY();
     return  sqrt(xd * xd + yd * yd);
 }
+
+double PointOfInterest::getAngle() const
+{
+    return angle;
+}
+
+void PointOfInterest::setAngle(double value)
+{
+    angle = value;
+}
+
+Descriptor PointOfInterest::getDescriptor() const
+{
+    return descriptor;
+}
+
+void PointOfInterest::setDescriptor(const Descriptor &value)
+{
+    descriptor = value;
+}

@@ -13,6 +13,7 @@ private:
 public:
     static void printAs2D(double *arr, int rows, int columns);
     static void printSample(int from, int to, double* data);
+    static QString gs(int from, int to, double* data);
     static void printSample(int sampleSize, double* data, int srcSize);
     static void printCanals(int *arr, int rows, int columns);
     static double* copyOf(double* arr, int size);
@@ -24,10 +25,12 @@ public:
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);
     static bool isGray(Canal type) {return (GRAY & type ) == GRAY; }
+    static double* getDoublesTupleForCanals(Canal canals, QRgb rgb, bool normalize = true);
     static int canalsCount(Canal type) {return isGray(type) ? 1 : noAlpha(type) ? 3 : 4;}
     static bool noAlpha(Canal type) {return (A & type ) != A; }
     static double* sample(int from, int to, double* data);
     static double* sample(int sampleSize, double* data, int srcSize);
+    static QRgb supplyWithRGB();
     static QString asQStringWithPrecision(double num, int precision) {return QString::number(num, 'f', precision);}
     static double* getZeroFilledArr(int size);
     // templates

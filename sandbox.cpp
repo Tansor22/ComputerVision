@@ -1,6 +1,6 @@
+#include "imagehandler.h"
 #include "imagetoprocess.h"
 #include "sandbox.h"
-
 #include <QApplication>
 
 void Sandbox::show(int *pixels, int w, int h) {
@@ -273,141 +273,36 @@ int* Sandbox::sobel() {
     return result;
 }
 ImageToProcess Sandbox::harris(int winSize, int nPoints) {
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
-
     ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+    // blur it a bit
     toProcess.gaussBlur(1.3);
 
-    // searching derivatives
-    ImageToProcess dx = ImageToProcess(imagePixmap, GRAY), dy = ImageToProcess(imagePixmap, GRAY);
-    dx.derivativeX();
-    dy.derivativeY();
-    dy.save("Y");
-    dx.save("X");
-
-    // derivatives have been found, proceeding
-    double *a = new double [w * h];
-    double *b = new double [w * h];
-    double *c = new double [w * h];
-    int halfSize = winSize / 2;
-
-
-    // searching weighs for window
-    double sigma = static_cast<double>(winSize) / 6;
-    double *gaussKernel = new double[winSize * winSize];
-
-    double coeff = 1 / (2 * M_PI * sigma * sigma);
-    double devider = 2 * sigma * sigma;
-
-    for (int u = -halfSize; u <= halfSize; u++)
-        for (int v = -halfSize; v <= halfSize; v++)
-            gaussKernel[(u + halfSize) * halfSize + (v  + halfSize)]
-                    = coeff * exp(- (u * u + v * v) / devider);
-
-
-
-    // calculating a,b,c for the points
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            double sumA = 0, sumB = 0, sumC = 0;
-            for (int u = -halfSize; u <= halfSize; u++) {
-                for (int v = -halfSize; v <= halfSize; v++) {
-                    double i_x = dx.getValueSafe(i + u, j + v);
-                    double i_y = dy.getValueSafe(i + u, j + v);
-                    sumA += i_x * i_x * gaussKernel[u * halfSize + v];
-                    sumB += i_x * i_y * gaussKernel[u * halfSize + v];
-                    sumC += i_y * i_y * gaussKernel[u * halfSize + v];
-                }
-            }
-            a[j * w + i] = sumA;
-            b[j * w + i] = sumB;
-            c[j * w + i] = sumC;
-        }
-    }
-
-    ImageToProcess tempItp = ImageToProcess(GRAY, w, h);
-
-
-    // eigenvalues
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++) {
-            double sc = a[j * w + i] + c[j * w + i];
-            double d = a[j * w + i] * c[j * w + i] - b[j * w + i] * b[j * w + i];
-            double det = sc * sc - 4 * d;
-            double L1 = (sc + sqrt(det)) / 2;
-            double L2 = (sc - sqrt(det)) / 2;
-            double cHarris = qMin(L1, L2);
-            tempItp.setValueSafe(i, j, cHarris);
-        }
-
-
-    pois = tempItp.getPOIs(5, true);
-
-
-    tempItp.save("HARRIS_RESPOND");
-
-    pois = ImageToProcess::filterPOIs(w, h, pois, nPoints);
+    QList <PointOfInterest> pois =
+            PoisHandler::handle(PoisHandler::HARRIS, toProcess, winSize, nPoints);
 
 
     ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
 
 
     // mark image
-    int crossSize = 3;
-    foreach (PointOfInterest point, pois) {
-        toMark.setValueSafe(point.getX(), point.getY(), 1);
-        for (int i = 1; i <= crossSize; i++) {
-            toMark.setValueSafe(point.getX() - i, point.getY(), 1);
-            toMark.setValueSafe(point.getX() + i, point.getY(), 1);
-            toMark.setValueSafe(point.getX(), point.getY() - i, 1);
-            toMark.setValueSafe(point.getX(), point.getY() + i, 1);
-        }
-    }
+    ImageHandler::markWithWhite(toMark, pois);
     return toMark;
 }
 
 ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
-    // do not display gauss
     ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
+    // blur it a bit
     toProcess.gaussBlur(1.3);
 
-    ImageToProcess temp = ImageToProcess(GRAY, w, h);
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++) {
-            double min = __DBL_MAX__;
-            for (int dx = -1; dx <= 1; dx++)
-                for (int dy = -1; dy <= 1; dy++) {
-                    if (dx != 0 && dy != 0) {
-                        double c = toProcess.shiftError(winSize, i, j, dx, dy);
-                        min = qMin(min, c);
-                    }
-                }
-            // ?? i j
-            temp.setValueSafe(j, i, min);
-        }
-    temp.save("MORAVEC_RESPONSE.png");
-    QList <PointOfInterest> points = toProcess.getPOIs(winSize);
+    QList <PointOfInterest> pois =
+            PoisHandler::handle(PoisHandler::MORAVEC, toProcess, winSize, nPoints);
 
-    // target points
-    points = ImageToProcess::filterPOIs(w, h, points, nPoints);
 
     ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
 
 
     // return marked image
-    int crossSize = 3;
-    foreach (PointOfInterest point, points) {
-        toMark.setValueSafe(point.getX(), point.getY(), 1.0);
-        for (int i = 1; i <= crossSize; i++) {
-            toMark.setValueSafe(point.getX() - i, point.getY(), 1.0);
-            toMark.setValueSafe(point.getX() + i, point.getY(), 1.0);
-            toMark.setValueSafe(point.getX(), point.getY() - i, 1.0);
-            toMark.setValueSafe(point.getX(), point.getY() + i, 1.0);
-        }
-    }
+    ImageHandler::markWithWhite(toMark, pois);
     return toMark;
 }
 void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma0) {
@@ -466,18 +361,137 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
 }
 
 int* Sandbox::descriptors(int nPoints) {
-    //    Descriptor d(2, 3);
-    //    qDebug() << d.asQString();
-    //    qDebug() << d.getHistograms();
+    ImageToProcess itp = new ImageToProcess(imagePixmap, GRAY);
+    itp.setName("outer");
+    QList <PointOfInterest> itpPois =
+            PoisHandler::handle(PoisHandler::HARRIS, itp, 3, nPoints, true);
+
+    // getting not rotated
+    //getImageViaFileName(fileName);
+
+    // mutate imagePixmap, futher addressing to imagePixmap would be to rotated
+    imagePixmap = ImageHandler::distort(imagePixmap, ImageHandler::IDENTITY, 15);
+//        QMatrix rm;
+//        rm.rotate(90);
+//        imagePixmap = imagePixmap.transformed(rm);
+        QPixmap rotatedPixmap = ImageHandler::rotate(imagePixmap, 15);
+
+    ImageToProcess distorted = ImageToProcess(imagePixmap, GRAY);
+    QList <PointOfInterest> distortedPois =
+            PoisHandler::handle(PoisHandler::HARRIS, distorted, 3, nPoints, true);
+    // distances between descriptors of images
+    double *distances = new double[itpPois.size() * distortedPois.size()];
+
+    // that's intentional
+    double min = __DBL_MAX__;
+    double max = __DBL_MIN__;
+    double mid = 0;
+
+    for(int i = 0; i < itpPois.size(); i++)
+        for(int j = 0; j < distortedPois.size(); j++){
+            double distance = itpPois[i].getDescriptor()
+                    .distance(distortedPois[i].getDescriptor());
+            distances[i * distortedPois.size() + j] = distance;
+            mid += distance;
+            if(distance < min)
+                min = distance;
+
+            if(distance > max)
+                max = distance;
+        }
 
 
-    int w = imagePixmap.width();
-    int h = imagePixmap.height();
+    mid /= itpPois.size() * distortedPois.size();
+    //qDebug()<<"MinDistance: " << min <<" MaxDistance: " << max << "mid: " << mid;
 
-    // getting pois with harris method
-    harris(3, nPoints);
-    ImageToProcess* itp = new ImageToProcess(GRAY, tool->getCanals(), w, h);
-    DescriptorBuilder db (itp);
+    QImage joined = ImageHandler::join(itp, distorted);
+//    QPixmap px(itp.getW() + rotated.getW(), qMax(itp.getH(), rotated.getH()));
+//    QPainter pJoin(&px);
+//    pJoin.drawImage(0, 0, itp.toQImage());
+//    pJoin.drawImage(itp.getW(), 0, rotated.toQImage());
+//    QImage joined = px.toImage();
+    QPainter p (&joined);
+    p.setPen(QColor(255, 255, 255, 160));
+    // mark source image with its pois
+    ImageHandler::markWithWhite(itp, itpPois);
+    // mark distorted image with its pois
+    ImageHandler::markWithWhite(distorted, distortedPois);
 
+    // matching descriptors
+    for(int i = 0; i < itpPois.size(); i++) {
+        double firstMin = __DBL_MAX__;
+        int firstMinI = 0;
+        double secondMin = __DBL_MAX__;
+
+        for(int j = 0; j < distortedPois.size(); j++){
+            double distance = distances[i * distortedPois.size() + j];
+            if(distance < firstMin){
+                secondMin = firstMin;
+                firstMin = distance;
+                firstMinI = j;
+            } else {
+                if(distance < secondMin)
+                    secondMin = distance;
+            }
+        }
+        // matching descriptors continues
+        double firstMin2 = __DBL_MAX__;
+        double secondMin2 = __DBL_MAX__;
+        for(int j = 0; j < itpPois.size(); j++) {
+            double distance = distances[j * distortedPois.size() + firstMinI];
+            if(distance < firstMin2){
+                secondMin2 = firstMin2;
+                firstMin2 = distance;
+            } else {
+                if(distance < secondMin2)
+                    secondMin2 = distance;
+            }
+        }
+        // matching descriptors continues
+        // discard according to NNDR
+        double NNDR = firstMin / secondMin;
+        double NNDR2 = firstMin2 / secondMin2;
+        // TODO play on param
+        double T = .6;
+        if (NNDR < T && NNDR2 < T && firstMin < max * 0.3) {
+            // match
+            QRgb rgb = Helper::supplyWithRGB();
+            int crossSize = 3;
+            // source image
+            itp.setValueSafe(itpPois[i].getX(), itpPois[i].getY(), rgb);
+            for (int i = 1; i <= crossSize; i++) {
+                itp.setValueSafe(itpPois[i].getX() - i,
+                                 itpPois[i].getY(), rgb);
+                itp.setValueSafe(itpPois[i].getX() + i,
+                                 itpPois[i].getY(), rgb);
+                itp.setValueSafe(itpPois[i].getX(),
+                                 itpPois[i].getY() - i, rgb);
+                itp.setValueSafe(itpPois[i].getX(),
+                                 itpPois[i].getY() + i, rgb);
+            }
+            // rotated image
+            distorted.setValueSafe(distortedPois[i].getX(), distortedPois[i].getY(), rgb);
+            for (int i = 1; i <= crossSize; i++) {
+                distorted.setValueSafe(distortedPois[firstMin].getX() - i,
+                                     distortedPois[firstMin].getY(), rgb);
+                distorted.setValueSafe(distortedPois[firstMin].getX() + i,
+                                     distortedPois[firstMin].getY(), rgb);
+                distorted.setValueSafe(distortedPois[firstMin].getX(),
+                                     distortedPois[firstMin].getY() - i, rgb);
+                distorted.setValueSafe(distortedPois[firstMin].getX(),
+                                     distortedPois[firstMin].getY() + i, rgb);
+            }
+            // draw a link
+            p.drawLine(itpPois[i].getX(), itpPois[i].getY(),
+                       distortedPois[firstMin].getX() + itp.getW(), distortedPois[firstMin].getY());
+        }
+        // matching ends
+    }
+     // save results
+    joined.save("JOINED.jpg", "JPG");
+    itp.save("SOURCE");
+    distorted.save("ROTATED");
+
+    qDebug() << "end descriptors" << endl;
     return 0;
 }

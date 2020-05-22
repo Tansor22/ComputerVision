@@ -20,8 +20,8 @@ public:
     ImageToProcess *gradientDirection;
     DescriptorBuilder(ImageToProcess *itp, int nBaskets = 8, int nHistogram = 4, int gridSize = 16);
 
-    Descriptor createDescriptor(PointOfInterest inputPoint);
-    QList<PointOfInterest> orientPoints(QList<PointOfInterest> points);
+    Descriptor buildDescriptor(PointOfInterest inputPoint);
+    QList<PointOfInterest> calcOrientPoints(QList<PointOfInterest> points);
 };
 
 #endif // DESCRIPTORBUILDER_H
