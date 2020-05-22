@@ -76,7 +76,7 @@ ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
     doubleData = dr.retriveData(rgbs, w, h);
 }
 
-ImageToProcess::ImageToProcess(ImageToProcess *itp)
+ImageToProcess::ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy oobp) : oobp(oobp)
 {
     setDoubles(itp->type,
                Helper::copyOf(itp->doubleData,
