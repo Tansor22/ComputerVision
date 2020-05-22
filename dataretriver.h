@@ -1,28 +1,28 @@
-#ifndef DATARETRIVER_H
-#define DATARETRIVER_H
+#ifndef DATARETRIEVER_H
+#define DATARETRIEVER_H
 #include <QPixmap>
 #include <QImage>
 #include <QtDebug>
 #include <constants.h>
 
-class DataRetriver
+class DataRetriever
 {
 private:
-    double (*mapper)(int);
-    // canals retriver works with
+    double (*mapper)(QRgb);
+    // canals retriever works with
     Canal canals;
-    double map(int rgb);
+    double map(QRgb rgb);
 public:
-    DataRetriver(Canal canals = 0, double (*mapper)(int) = 0)
+    DataRetriever(Canal canals = 0, double (*mapper)(QRgb) = 0)
         : mapper(mapper), canals(canals) {};
     // splits into canals
-    double* retriveData(int* arr, int w, int h);
-    // retriveng ints from Qt objects
-    int* retriveData(QImage qi);
-    int* retriveData(QPixmap qp);
+    double* retrieveData(QRgb* arr, int w, int h);
+    // retrieving ints from Qt objects
+    QRgb* retrieveData(QImage qi);
+    QRgb* retrieveData(QPixmap qp);
     // normalizes pixels
     void normalizeExtra(int size, double* data);
 
 };
 
-#endif // DATARETRIVER_H
+#endif // DATARETRIEVER_H

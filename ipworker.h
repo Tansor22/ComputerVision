@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <QDebug>
-#include "convolutionaltool.h"
+#include "convolutiontool.h"
 
 class IPWorker : public QThread
 {
@@ -15,17 +15,17 @@ private:
     int uid;
 
     // logic
-    ConvolutionalTool* tool;
+    ConvolutionTool* tool;
     Canal type;
     int from;
     int to;
     double *tempCanals;
     double *canals;
-    int *target;
+    QRgb* target;
 
 public:
     explicit IPWorker(QObject *parent = 0) : QThread(parent) {};
-    IPWorker(ConvolutionalTool* tool, Canal type, int from, int to, double *tempCanals, double *canals, int *target);
+    IPWorker(ConvolutionTool* tool, Canal type, int from, int to, double *tempCanals, double *canals, QRgb* target);
     void run();
     void greet() {qDebug() << "Hello, my name is " << name << endl; }
     void bye() {qDebug() << "Bye, this has been " << name << endl; }

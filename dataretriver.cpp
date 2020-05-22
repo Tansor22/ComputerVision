@@ -1,10 +1,10 @@
 #include "dataretriver.h"
 
 // retrives data from QPixmap, QImage, and canals value from rgb int array
-double DataRetriver::map(int rgb) {
+double DataRetriever::map(QRgb rgb) {
     return mapper != 0 ? mapper(rgb) : (double) rgb;
 }
-void DataRetriver::normalizeExtra(int size, double* data) {
+void DataRetriever::normalizeExtra(int size, double* data) {
     int canalI = 0;
     // gray
     double max;
@@ -51,7 +51,7 @@ void DataRetriver::normalizeExtra(int size, double* data) {
     int i, target;
     // searching for max and min values
     for (i = 0; i < size; i++) {
-        // GRAYSCALED IMAGE
+        // GRAY IMAGE
         if ((GRAY & canals ) == GRAY)  {
             if (data[i] < min) min = data[i];
             if (data[i] > max) max = data[i];
@@ -80,7 +80,7 @@ void DataRetriver::normalizeExtra(int size, double* data) {
 
     // normalizing
     for (i = 1; i < size; i++) {
-        // GRAYSCALED IMAGE
+        // GRAYS IMAGE
         if ((GRAY & canals ) == GRAY)  {
             // (val - min) * ((globalMax - globalMin) / (max - min)) + globalMin;
             data[i] = (data[i] - min) * (1.0 / (max - min));
@@ -112,7 +112,7 @@ void DataRetriver::normalizeExtra(int size, double* data) {
 
 }
 
-double* DataRetriver::retriveData(int* arr, int w, int h) {
+double* DataRetriever::retrieveData(QRgb* arr, int w, int h) {
     // checks for gray first
     int coef = 1;
     if ((GRAY & canals ) != GRAY) {
@@ -152,17 +152,17 @@ double* DataRetriver::retriveData(int* arr, int w, int h) {
     return data;
 }
 
-int* DataRetriver::retriveData(QImage qi) {
+QRgb* DataRetriever::retrieveData(QImage qi) {
     int w = qi.width();
     int h = qi.height();
-    int* data = new int[w * h];
+    QRgb* data = new QRgb[w * h];
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             data[i * w + j] = qi.pixel(j,i);
     return data;
 }
 
-int* DataRetriver::retriveData(QPixmap qp) {
-    return retriveData(qp.toImage());
+QRgb* DataRetriever::retrieveData(QPixmap qp) {
+    return retrieveData(qp.toImage());
 }
 

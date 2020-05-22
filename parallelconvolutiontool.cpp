@@ -1,11 +1,11 @@
 #include "dataretriver.h"
 #include "helper.h"
-#include "parallelconvolutionaltool.h"
+#include "parallelconvolutiontool.h"
 
-int* ParallelConvolutionalTool::process(FillType ft, Canal type, int* pixels) {
+QRgb*  ParallelConvolutionTool::process(FillType ft, Canal type, QRgb*  pixels) {
     prepare(ft, type, pixels);
 
-    int* result = new int[w * h];
+    QRgb*  result = new QRgb[w * h];
 
     const int cores = std::thread::hardware_concurrency();
     int batch = (w * h) / cores;

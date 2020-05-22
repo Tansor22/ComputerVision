@@ -13,8 +13,8 @@ include_directories(.)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 add_executable(ImageProcessing
         constants.h
-        convolutionaltool.cpp
-        convolutionaltool.h
+        convolutiontool.cpp
+        convolutiontool.h
         dataretriver.cpp
         dataretriver.h
         descriptor.cpp
@@ -33,8 +33,8 @@ add_executable(ImageProcessing
         mainform.cpp
         mainform.h
         octave.h
-        parallelconvolutionaltool.cpp
-        parallelconvolutionaltool.h
+        parallelconvolutiontool.cpp
+        parallelconvolutiontool.h
         pointofinterest.cpp
         pointofinterest.h
         poishandler.cpp
@@ -42,9 +42,9 @@ add_executable(ImageProcessing
         pyramid.h
         sandbox.cpp
         sandbox.h
-        sequentialconvolutionaltool.cpp
-        sequentialconvolutionaltool.h
-        ui_mainform.h)
+        sequentialconvolutiontool.cpp
+        sequentialconvolutiontool.h
+        ui_mainform.h CppDemo.cpp CppDemo.h Distortion.cpp Distortion.h Rotate.cpp Rotate.h Identity.cpp Identity.h KernelsHandler.cpp KernelsHandler.h)
 
 # Link Qt libraries to the exe's
 target_link_libraries(ImageProcessing Qt5::Core Qt5::Widgets Qt5::Gui)

@@ -1,11 +1,15 @@
 #include "imagehandler.h"
-#include "imagetoprocess.h"
 #include "sandbox.h"
 #include <QApplication>
+#include <utility>
 
-void Sandbox::show(int *pixels, int w, int h) {
+Sandbox::Sandbox() {
+
+}
+
+void Sandbox::show(QRgb*pixels, int w, int h) const {
     if (showResults && !innerCall) {
-        if (pixels == 0) {
+        if (pixels == nullptr) {
             // show current src image
             form->scene->addPixmap(imagePixmap);
         } else {
@@ -23,26 +27,26 @@ void Sandbox::show(int *pixels, int w, int h) {
     }
 }
 
-void Sandbox::show(ImageToProcess itp) {
+void Sandbox::show(ImageToProcess itp) const {
     show(itp.toIntRGB(), itp.w, itp.h);
 }
-void Sandbox::getImageViaFileName(QString fileName)  {
-    this->fileName = fileName;
-    imagePixmap.load(fileName);
+void Sandbox::getImageViaFileName(const QString& fn)  {
+    fileName = fn;
+    imagePixmap.load(fn);
 }
 
 void Sandbox::getImageViaFileDialog() {
 
     fileName = QFileDialog::
-            getOpenFileName(NULL,
+            getOpenFileName(nullptr,
                             "Open Image", IMAGES_PATH, "Image Files (*.png *.jpg *.bmp)");
     imagePixmap.load(fileName);
 }
-void Sandbox::write(ImageToProcess itp, QString fileName) {
-    write(itp.toIntRGB(), fileName, itp.w, itp.h);
-
+void Sandbox::write(ImageToProcess itp, QString fn) const {
+    write(itp.toIntRGB(), std::move(fn), itp.w, itp.h);
 }
-void Sandbox::write(int *pixels, QString fileName, int w, int h) {
+
+void Sandbox::write(QRgb* pixels, const QString& fn, int w, int h) const {
     QImage image = imagePixmap.toImage();
     // default params logic
     w = w < 0 ? imagePixmap.width() : w;
@@ -51,194 +55,109 @@ void Sandbox::write(int *pixels, QString fileName, int w, int h) {
         for (int x = 0; x < w; x++)
             image.setPixelColor(x,y, pixels[y * w + x]);
 
-    QFile file(fileName + ".png");
+    QFile file(fn + ".png");
     file.open(QIODevice::WriteOnly);
     image.save(&file, "PNG");
 }
 
-int* Sandbox::grayscaled() {
-    DataRetriver dr = DataRetriver(NULL);
+QRgb* Sandbox::grayScaled() const {
+    DataRetriever dr = DataRetriever(0);
 
-    int* data = dr.retriveData(imagePixmap);
-    // such a retriver returns single channel(gray) 0..255 (no mapper) as double
-    dr = DataRetriver(GRAY);
-    double* grayscaled = dr.retriveData(data,imagePixmap.width(), imagePixmap.height());
+    QRgb* data = dr.retrieveData(imagePixmap);
+    // such a retriever returns single channel(gray) 0..255 (no mapper) as double
+    dr = DataRetriever(GRAY);
+    double* grayScaled = dr.retrieveData(data, imagePixmap.width(), imagePixmap.height());
     int size = imagePixmap.width() * imagePixmap.height();
-    data = new int[size];
+    data = new QRgb[size];
     for (int i = 0; i < size; i ++)
-        data[i] = qRgb(grayscaled[i], grayscaled[i], grayscaled[i]);
-
+        data[i] = qRgb(static_cast<int>(grayScaled[i]), static_cast<int>(grayScaled[i]), static_cast<int>(grayScaled[i]));
     show(data);
     return data;
 }
 
-double* Sandbox::getDoublesAs(Canal type, int w, int h, double (*mapper)(int))
+double* Sandbox::getDoublesAs(Canal type, int w, int h, double (*mapper)(QRgb)) const
 {
-    DataRetriver dr = DataRetriver(NULL);
-    int* data = dr.retriveData(imagePixmap);
-    dr = DataRetriver(type, mapper);
+    DataRetriever dr = DataRetriever();
+    QRgb* data = dr.retrieveData(imagePixmap);
+    dr = DataRetriever(type, mapper);
     // normalized
-    return dr.retriveData(data, w, h);
+    return dr.retrieveData(data, w, h);
 }
-//int* Sandbox::gaussBlurGrayV2(double sigma) {
 
-
-//    int size = (int)(3 * sigma);
-//    int halfSize = size / 2;
-//    double ss2 = 2 * sigma * sigma;
-//    double firstDrob = 1.0 / (M_PI * ss2);
-
-//    double* tmp = new double[size];
-//    for(int x = -halfSize,  ptr = 0; x <= halfSize ; x++){
-//        double gauss = firstDrob * exp( -(x * x) / ss2);
-//        tmp[ptr++] = gauss;
-
-//    }
-
-//    int w = imagePixmap.width();
-//    int h = imagePixmap.height();
-
-//    DataRetriver dr = DataRetriver(NULL);
-
-//    int* data = dr.retriveData(imagePixmap);
-
-//    dr = DataRetriver(GRAY, Helper::normalizeStraight);
-
-//    double* rgbNormalized = dr.retriveData(data, w, h);
-
-//    ImageToProcess itp = ImageToProcess();
-//    itp.setDoubles(GRAY, rgbNormalized, w, h);
-//    ConvolutionalTool* temp = new SequentialConvolutionalTool();
-//    ImageToProcess output = temp->cross(&itp, tmp, size, 1);
-
-//    ImageToProcess output2 = temp->cross(&output, tmp, 1, size);
-//    int * result = output2.toIntRGB();
-
-//    show(result);
-//    return result;
-
-//}
-int* Sandbox::gaussBlurGray(double sigma) {
+QRgb* Sandbox::gaussBlurGray(double sigma) const {
     int size = floor(3 * sigma);
-    double* kernel =  Helper::gauss(sigma);
+    double* kernel =  KernelsHandler::getGauss(sigma);
 
-    tool = new SequentialConvolutionalTool(imagePixmap.width(),
-                                           imagePixmap.height(),
-                                           kernel,
-                                           size);
-
-    DataRetriver dr = DataRetriver(NULL);
-
-    int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, GRAY, data);
-    show(result);
-    return result;
-}
-int* Sandbox::gaussBlurRGB(double sigma) {
-    int size = floor(3 * sigma);
-    double* kernel =  Helper::gauss(sigma);
-
-    tool = new ParallelConvolutionalTool(imagePixmap.width(),
+    ConvolutionTool* tool = new SequentialConvolutionTool(imagePixmap.width(),
                                          imagePixmap.height(),
                                          kernel,
                                          size);
 
-    DataRetriver dr = DataRetriver(NULL);
+    DataRetriever dr = DataRetriever();
 
-    int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, R | G | B, data);
+    QRgb* data = dr.retrieveData(imagePixmap);
+    QRgb* result = tool->process(BORDER, GRAY, data);
     show(result);
     return result;
 }
-//int* Sandbox::crossDemo() {
-//    double INCREASE_SHARPNESS[] =  {
-//        -1.0, -1.0, -1.0,
-//        -1.0, 9.0, -1.0,
-//        -1.0, -1.0, -1.0
-//    };
+QRgb* Sandbox::gaussBlurRGB(double sigma) const {
+    int size = floor(3 * sigma);
+    double* kernel =  Helper::gauss(sigma);
 
-//    int size = 3;
-//    int w = imagePixmap.width();
-//    int h = imagePixmap.height();
+    ConvolutionTool* tool = new ParallelConvolutionTool(imagePixmap.width(),
+                                                        imagePixmap.height(),
+                                                        kernel,
+                                                        size);
 
-//    DataRetriver dr = DataRetriver(NULL);
+    DataRetriever dr = DataRetriever();
 
-//    int* data = dr.retriveData(imagePixmap);
-
-//    dr = DataRetriver(GRAY, Helper::normalizeStraight);
-
-//    double* rgbNormalized = dr.retriveData(data, w, h);
-
-//    ImageToProcess itp = ImageToProcess();
-//    itp.setDoubles(GRAY, rgbNormalized, w, h);
-//    ConvolutionalTool* temp = new SequentialConvolutionalTool();
-//    ImageToProcess output = temp->cross(&itp, INCREASE_SHARPNESS, size, size);
-//    int * result = output.toIntRGB();
-
-//    show(result);
-//    return result;
-//}
-
-int* Sandbox::increaseSharpness() {
-    double INCREASE_SHARPNESS[] =  {
-        -1.0, -1.0, -1.0,
-        -1.0, 9.0, -1.0,
-        -1.0, -1.0, -1.0
-    };
-
-    int size = 3;
-
-
-    ConvolutionalTool* tool = new ParallelConvolutionalTool(imagePixmap.width(),
-                                                            imagePixmap.height(),
-                                                            INCREASE_SHARPNESS,
-                                                            size);
-
-    DataRetriver dr = DataRetriver(NULL);
-
-    int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, R | G | B | A, data);
+    QRgb* data = dr.retrieveData(imagePixmap);
+    QRgb* result = tool->process(BORDER, R | G | B, data);
     show(result);
     return result;
 }
-int* Sandbox::sobelV2() {
-    double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
-    };
-    int size = 3;
+
+QRgb* Sandbox::increaseSharpness() const {
+    ConvolutionTool* tool = new ParallelConvolutionTool(imagePixmap.width(),
+                                                        imagePixmap.height(),
+                                                        KernelsHandler::getIncreaseSharpness(),
+                                                        3);
+
+    DataRetriever dr = DataRetriever();
+
+    QRgb* data = dr.retrieveData(imagePixmap);
+    QRgb* result = tool->process(BORDER, R | G | B | A, data);
+    show(result);
+    return result;
+}
+QRgb* Sandbox::sobelV2() const {
     int w = imagePixmap.width();
     int h = imagePixmap.height();
-    ConvolutionalTool* tool = new SequentialConvolutionalTool(w, h, SOBEL_X, size);
+    int size = 3;
+    ConvolutionTool* tool = new SequentialConvolutionTool(w, h,  KernelsHandler::getSobelX(), size);
     tool->setSobelFlagTo(true);
-    DataRetriver dr = DataRetriver(NULL);
+    DataRetriever dr = DataRetriever();
 
-    int* data = dr.retriveData(imagePixmap);
+    QRgb* data = dr.retrieveData(imagePixmap);
     // ignoring the result
     tool->process(BORDER, GRAY, data);
     double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
 
     // y derivative
-    double SOBEL_Y[] =  {
-        1.0, 2.0, 1.0,
-        0.0, 0.0, 0.0,
-        -1.0, -2.0, -1.0
-    };
-    tool->recharge(SOBEL_Y, size);
+    tool->recharge(KernelsHandler::getSobelX(), size);
     // ignoring the result
     tool->process(BORDER, GRAY, data);
     // no need to copy
     double* derivativeY = tool->getCanals();
 
     double* temp = new double[w * h];
-    int* result = new int[w * h];
+    QRgb* result;
 
     for (int i = 0; i < w * h; i++)
         temp[i] = sqrt(derivativeY[i] * derivativeY[i] +
                        derivativeX[i] * derivativeX[i]);
 
-    dr = DataRetriver(GRAY);
+    dr = DataRetriever(GRAY);
     dr.normalizeExtra(w *h, temp);
 
     result = Helper::toIntRGB(GRAY, temp, w * h);
@@ -247,32 +166,22 @@ int* Sandbox::sobelV2() {
     return result;
 
 }
-int* Sandbox::sobel() {
-    double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
-    };
-    double SOBEL_Y[] =  {
-        1.0, 2.0, 1.0,
-        0.0, 0.0, 0.0,
-        -1.0, -2.0, -1.0
-    };
-    int size = 3;
-    ConvolutionalTool* tool = new SequentialConvolutionalTool(imagePixmap.width(),
-                                                              imagePixmap.height(),
-                                                              SOBEL_X,
-                                                              size,
-                                                              SOBEL_Y);
-    DataRetriver dr = DataRetriver(NULL);
+QRgb* Sandbox::sobel() const {
+    ConvolutionTool* tool = new SequentialConvolutionTool(imagePixmap.width(),
+                                                          imagePixmap.height(),
+                                                          KernelsHandler::getSobelX(),
+                                                          3,
+                                                          KernelsHandler::getSobelY());
+    tool->setSobelFlagTo(true);
+    DataRetriever dr = DataRetriever();
 
-    int* data = dr.retriveData(imagePixmap);
-    int * result = tool->process(BORDER, GRAY, data);
+    QRgb* data = dr.retrieveData(imagePixmap);
+    QRgb* result = tool->process(BORDER, GRAY, data);
     show(result);
 
     return result;
 }
-ImageToProcess Sandbox::harris(int winSize, int nPoints) {
+ImageToProcess Sandbox::harris(int winSize, int nPoints) const {
     ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
     // blur it a bit
     toProcess.gaussBlur(1.3);
@@ -289,7 +198,7 @@ ImageToProcess Sandbox::harris(int winSize, int nPoints) {
     return toMark;
 }
 
-ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
+ImageToProcess Sandbox::moravec(int winSize, int nPoints) const {
     ImageToProcess toProcess = ImageToProcess(imagePixmap, GRAY);
     // blur it a bit
     toProcess.gaussBlur(1.3);
@@ -300,7 +209,6 @@ ImageToProcess Sandbox::moravek(int winSize, int nPoints) {
 
     ImageToProcess toMark = ImageToProcess(imagePixmap, R | G | B);
 
-
     // return marked image
     ImageHandler::markWithWhite(toMark, pois);
     return toMark;
@@ -309,7 +217,7 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
     double k = pow(2.0, 1.0 / (nLevels - 1)); // interval
     double sigmaB = sqrt(sigma0 * sigma0 - sigmaA * sigmaA);
 
-    ImageToProcess* toProcess = new ImageToProcess(imagePixmap, R | G | B);
+    auto* toProcess = new ImageToProcess(imagePixmap, R | G | B);
 
     // blur it a bit
     toProcess->gaussBlur(sigmaB);
@@ -327,7 +235,7 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
     Pyramid *currentLayer;
 
     for(int i = 0; i < nOctaves; i++){
-        oneOctave = new QList <Pyramid*>();   //создаем новую октаву
+        oneOctave = new QList <Pyramid*>();
         double sigmaLocal = sigma0;
 
         currentLayer = new Pyramid(toProcess, i, 0);
@@ -347,10 +255,10 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         pyramid.append(new Octave(oneOctave, i));
 
         if (i < nOctaves - 1)
-            toProcess->downsample(); // shrinken image
+            toProcess->downSample(); // shrinking image
     }
 
-    // writting to hard disk
+    // writing to hard disk
     foreach (Octave *octave, pyramid)
         foreach (Pyramid *layer, *octave->getLayers()) {
             QString path = "octave " + QString::number(layer->getOctaves() + 1) +
@@ -360,7 +268,7 @@ void Sandbox::calcPyramid(int nOctaves, int nLevels, double sigmaA, double sigma
         }
 }
 
-int* Sandbox::descriptors(int nPoints) {
+QRgb* Sandbox::descriptors(int nPoints, Distortion* distortion) {
     ImageToProcess itp = new ImageToProcess(imagePixmap, GRAY);
     itp.setName("outer");
     QList <PointOfInterest> itpPois =
@@ -369,22 +277,19 @@ int* Sandbox::descriptors(int nPoints) {
     // getting not rotated
     //getImageViaFileName(fileName);
 
-    // mutate imagePixmap, futher addressing to imagePixmap would be to rotated
-    imagePixmap = ImageHandler::distort(imagePixmap, ImageHandler::IDENTITY, 15);
-//        QMatrix rm;
-//        rm.rotate(90);
-//        imagePixmap = imagePixmap.transformed(rm);
-        QPixmap rotatedPixmap = ImageHandler::rotate(imagePixmap, 15);
+    // mutate imagePixmap, further addressing to imagePixmap would be to rotated
+    imagePixmap = distortion->distort(imagePixmap);
+
 
     ImageToProcess distorted = ImageToProcess(imagePixmap, GRAY);
     QList <PointOfInterest> distortedPois =
             PoisHandler::handle(PoisHandler::HARRIS, distorted, 3, nPoints, true);
     // distances between descriptors of images
-    double *distances = new double[itpPois.size() * distortedPois.size()];
+    auto *distances = new double[itpPois.size() * distortedPois.size()];
 
     // that's intentional
-    double min = __DBL_MAX__;
-    double max = __DBL_MIN__;
+    auto min = __DBL_MAX__;
+    auto max = __DBL_MIN__;
     double mid = 0;
 
     for(int i = 0; i < itpPois.size(); i++)
@@ -419,9 +324,9 @@ int* Sandbox::descriptors(int nPoints) {
 
     // matching descriptors
     for(int i = 0; i < itpPois.size(); i++) {
-        double firstMin = __DBL_MAX__;
+        auto firstMin = __DBL_MAX__;
         int firstMinI = 0;
-        double secondMin = __DBL_MAX__;
+        auto secondMin = __DBL_MAX__;
 
         for(int j = 0; j < distortedPois.size(); j++){
             double distance = distances[i * distortedPois.size() + j];
@@ -435,8 +340,8 @@ int* Sandbox::descriptors(int nPoints) {
             }
         }
         // matching descriptors continues
-        double firstMin2 = __DBL_MAX__;
-        double secondMin2 = __DBL_MAX__;
+        auto firstMin2 = __DBL_MAX__;
+        auto secondMin2 = __DBL_MAX__;
         for(int j = 0; j < itpPois.size(); j++) {
             double distance = distances[j * distortedPois.size() + firstMinI];
             if(distance < firstMin2){

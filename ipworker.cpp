@@ -1,12 +1,12 @@
 #include "ipworker.h"
 
-IPWorker::IPWorker( ConvolutionalTool* tool,
-                    Canal type,
-                    int from,
-                    int to,
-                    double *tempCanals,
-                    double *canals,
-                    int *target) {
+IPWorker::IPWorker(ConvolutionTool* tool,
+                   Canal type,
+                   int from,
+                   int to,
+                   double *tempCanals,
+                   double *canals,
+                   QRgb* target) {
     this->type = type;
     this->from = from;
     this->to = to;

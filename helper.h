@@ -9,19 +9,19 @@
 class Helper
 {
 private:
-    static const int ELEMS_IN_LINE = 6;
+    static const int ELEMENTS_IN_LINE = 6;
 public:
     static void printAs2D(double *arr, int rows, int columns);
     static void printSample(int from, int to, double* data);
     static QString gs(int from, int to, double* data);
     static void printSample(int sampleSize, double* data, int srcSize);
-    static void printCanals(int *arr, int rows, int columns);
+    static void printCanals(QRgb* arr, int rows, int columns);
     static double* copyOf(double* arr, int size);
-    static double normalizeStraight(int rgb);
+    static double normalizeStraight(QRgb rgb);
     static double distance(double x1, double x2, double y1, double y2);
     static QList<double> wrapInQList(double* arr, int size);
     static QList<QList<double>> wrapInQListPerCanal(Canal type, double* arr, int w, int h);
-    static int* toIntRGB(Canal type, double* data, int size);
+    static QRgb* toIntRGB(Canal type, double* data, int size);
     static int normalizeReverse(double normalized);
     static double* gauss(double sigma);
     static bool isGray(Canal type) {return (GRAY & type ) == GRAY; }

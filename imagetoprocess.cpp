@@ -1,5 +1,7 @@
 #include "imagetoprocess.h"
 
+#include <utility>
+
 void ImageToProcess::cross(double* kernel, int kernelW, int kernelH, double divider) {
     // data required by calculation
     int ku = kernelH / 2;
@@ -37,7 +39,7 @@ void ImageToProcess::cross(double* kernel, int kernelW, int kernelH, double divi
                     for (int c = 0; c < canalsCount; c++)
                         toReduce[reducedPtr++] =
                                 kernel[(u + ku) * kernelW + v + kv]* doubleData[x * w + y + w * h * c];
-                    reduced = ConvolutionalTool::reduce(canalsCount, toReduce, kernelW * kernelH);
+                    reduced = ConvolutionTool::reduce(canalsCount, toReduce, kernelW * kernelH);
                 }
             //Helper::printSample(0, canalsCount, reduced);
 
@@ -68,12 +70,12 @@ ImageToProcess::ImageToProcess(Canal type, double *data, int w, int h)
 ImageToProcess::ImageToProcess(QPixmap pixmap, Canal type) : type(type) {
     w = pixmap.width();
     h = pixmap.height();
-    DataRetriver dr = DataRetriver();
+    DataRetriever dr = DataRetriever();
 
-    int* rgbs = dr.retriveData(pixmap);
+    QRgb* rgbs = dr.retrieveData(pixmap);
     // remove second arg and gets values in 0.0 ... 255.0, otherwise 0.0 ... 1.0
-    dr = DataRetriver(type, Helper::normalizeStraight);
-    doubleData = dr.retriveData(rgbs, w, h);
+    dr = DataRetriever(type, Helper::normalizeStraight);
+    doubleData = dr.retrieveData(rgbs, w, h);
 }
 
 ImageToProcess::ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy oobp) : oobp(oobp)
@@ -87,13 +89,13 @@ ImageToProcess::ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy oobp) : oob
 ImageToProcess::ImageToProcess(Canal type, int w, int h) : type(type), w(w), h(h) {
     doubleData = Helper::getZeroFilledArr(w * h * Helper::canalsCount(type));
 }
-int* ImageToProcess::toIntRGB() {
+QRgb* ImageToProcess::toIntRGB() {
     return Helper::toIntRGB(type, doubleData, w * h);
 }
 
 QImage ImageToProcess::toQImage()
 {
-    int* rgbs = toIntRGB();
+    QRgb* rgbs = toIntRGB();
     QImage image = QImage(w, h, QImage::Format_RGB32);
     for (int y = 0; y < h; y++)
         for (int x = 0; x < w; x++)
@@ -105,11 +107,11 @@ void ImageToProcess::gaussBlur(double sigma) {
     int size = floor(3 * sigma);
     double* kernel =  Helper::gauss(sigma);
 
-    ConvolutionalTool* tool = new SequentialConvolutionalTool(w, h, kernel, size);
+    ConvolutionTool* tool = new SequentialConvolutionTool(w, h, kernel, size);
 
-    int* data = toIntRGB();
+    QRgb*  data = toIntRGB();
     // assert result == toIntRGB()
-    int * result = tool->process(BORDER, type, data);
+    QRgb*  result = tool->process(BORDER, type, data);
     setDoubles(type, Helper::copyOf(tool->getCanals(), w * h * Helper::canalsCount(type)), w, h);
     delete data;
     delete result;
@@ -118,19 +120,12 @@ void ImageToProcess::gaussBlur(double sigma) {
 
 void ImageToProcess::derivativeX()
 {
-    double SOBEL_X[] =  {
-        -1.0, 0, 1.0,
-        -2.0, 0, 2.0,
-        -1.0, 0, 1.0
-    };
-    int size = 3;
-
-    ConvolutionalTool* tool =
-            new SequentialConvolutionalTool(w, h, SOBEL_X, size);
+    ConvolutionTool* tool =
+            new SequentialConvolutionTool(w, h, KernelsHandler::getSobelX(), 3);
     tool->setSobelFlagTo(true);
 
     // probably should transfer to 0 .. 255
-    int* data = toIntRGB();
+    QRgb* data = toIntRGB();
     tool->process(BORDER, GRAY, data);
     // probably should not copy
     double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
@@ -146,19 +141,12 @@ void ImageToProcess::save(QString fileName)
 
 void ImageToProcess::derivativeY()
 {
-    double SOBEL_Y[] =  {
-        -1.0, -2.0, -1.0,
-        0.0, 0.0, 0.0,
-        1.0, 2.0, 1.0
-    };
-    int size = 3;
-
-    ConvolutionalTool* tool =
-            new SequentialConvolutionalTool(w, h, SOBEL_Y, size);
+    ConvolutionTool* tool =
+            new SequentialConvolutionTool(w, h, KernelsHandler::getSobelY(), 3);
     tool->setSobelFlagTo(true);
 
     // probably should transfer to 0 .. 255
-    int* data = toIntRGB();
+    QRgb*  data = toIntRGB();
     tool->process(BORDER, GRAY, data);
     // probably should not copy
     double* derivativeX = Helper::copyOf(tool->getCanals(), w * h);
@@ -169,21 +157,10 @@ void ImageToProcess::derivativeY()
 
 void ImageToProcess::gradient()
 {
-    double SOBEL_X[] =  {
-        1.0, 0, -1.0,
-        2.0, 0, -2.0,
-        1.0, 0, -1.0
-    };
-    double SOBEL_Y[] =  {
-        1.0, 2.0, 1.0,
-        0.0, 0.0, 0.0,
-        -1.0, -2.0, -1.0
-    };
-    int size = 3;
-    ConvolutionalTool* tool =
-            new SequentialConvolutionalTool(w, h, SOBEL_X, size, SOBEL_Y);
-
-    int* data = toIntRGB();
+    ConvolutionTool* tool =
+            new SequentialConvolutionTool(w, h, KernelsHandler::getSobelX(), 3, KernelsHandler::getSobelY());
+    tool->setSobelFlagTo(true);
+    QRgb* data = toIntRGB();
     tool->process(BORDER, GRAY, data);
     setDoubles(type, tool->getCanals(), w, h);
 }
@@ -195,7 +172,7 @@ void ImageToProcess::setDoubles(Canal type, double *doubleData, int w, int h) {
     this->h = h;
 }
 double ImageToProcess::getValueSafe(int x, int y) {
-    // coorect out of bound
+    // correct out of bound
     switch (oobp) {
         case EDGE: {
             int i = y <= 0 ? 0 : (y >= h - 1 ? h - 1 : y);
@@ -269,7 +246,8 @@ QList<PointOfInterest> ImageToProcess::getPOIs(int winSize, bool isHarris) {
     return PoisHandler::getPOIs(this, winSize, isHarris);
 }
 QList<PointOfInterest> ImageToProcess::filterPOIs(QList<PointOfInterest> pointsIn, int count) {
-    return PoisHandler::filterPOIs(this->w, this->h, pointsIn, count);
+    // ??? move
+    return PoisHandler::filterPOIs(this->w, this->h, std::move(pointsIn), count);
 }
 
 double *ImageToProcess::getDoubles() const
@@ -287,7 +265,7 @@ int ImageToProcess::getW() const
     return w;
 }
 
-void ImageToProcess::downsample() {
+void ImageToProcess::downSample() {
     // only for rgb
     if (Helper::isGray(type))
         return;

@@ -1,6 +1,6 @@
 #include "helper.h"
 
-double Helper::normalizeStraight(int rgb) {
+double Helper::normalizeStraight(QRgb rgb) {
     return rgb / 255.0;
 }
 
@@ -35,7 +35,7 @@ QList<QList<double>> Helper::wrapInQListPerCanal(Canal type, double *arr, int w,
 
 
 int Helper::normalizeReverse(double normalized) {
-    return (int) (normalized * 255.0);
+    return static_cast<int>(normalized * 255.0);
 }
 double* Helper::sample(int from, int to, double *data) {
     // non negative
@@ -43,7 +43,7 @@ double* Helper::sample(int from, int to, double *data) {
     int size = to - from;
     // to is greater than from
     assert(size > 0);
-    double* sample = new double[size];
+    auto* sample = new double[size];
     for (int i = from; i < to; i++)
         sample[i] = data[i];
     return sample;
@@ -83,7 +83,7 @@ QString Helper::gs(int from, int to, double *data)
 
     for (int i = 0; i < to - from; i++) {
         str += std::to_string(toPrint[i]) + " ";
-        if (++elems > ELEMS_IN_LINE) { str += "\t\n"; elems = 0;};
+        if (++elems > ELEMENTS_IN_LINE) { str += "\t\n"; elems = 0;};
     }
     return str.c_str();
 }
@@ -94,7 +94,7 @@ void Helper::printSample(int sampleSize, double *data, int srcSize) {
 
     for (int i = 0; i < sampleSize; i++) {
         str += std::to_string(toPrint[i]) + " ";
-        if (++elems > ELEMS_IN_LINE) { str += "\t\n"; elems = 0;};
+        if (++elems > ELEMENTS_IN_LINE) { str += "\t\n"; elems = 0;};
     }
     qDebug() << str.c_str() << endl;
 }
@@ -153,8 +153,8 @@ double *Helper::getDoublesTupleForCanals(Canal canals, QRgb rgb, bool normalize)
     return tuple;
 }
 
-int* Helper::toIntRGB(Canal type, double *data, int size) {
-    int* output = new int[size];
+QRgb* Helper::toIntRGB(Canal type, double *data, int size) {
+    QRgb* output = new QRgb[size];
     for (int i = 0; i < size; i++)
         output[i] =
                 isGray(type)
@@ -185,7 +185,7 @@ double* Helper::copyOf(double *arr, int size) {
     for (int i = 0; i < size; i++) output[i] = arr[i];
     return output;
 }
-void Helper::printCanals(int *arr, int rows, int columns) {
+void Helper::printCanals(QRgb* arr, int rows, int columns) {
     std::string str = "";
     for (int c = 0; c < 3; c++){
         str += "Canal " + std::to_string(c + 1) + "\t\n";

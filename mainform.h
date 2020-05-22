@@ -1,9 +1,9 @@
 #ifndef MAINFORM_H
 #define MAINFORM_H
 
-#include "sequentialconvolutionaltool.h"
-#include "parallelconvolutionaltool.h"
-#include "convolutionaltool.h"
+#include "sequentialconvolutiontool.h"
+#include "parallelconvolutiontool.h"
+#include "convolutiontool.h"
 #include <QGraphicsScene>
 #include <QWidget>
 #include <QDesktopWidget>

@@ -1,6 +1,4 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
-
+#pragma once
 typedef int Canal;
 typedef int FillType;
 const FillType ZEROS = 0;
@@ -12,4 +10,3 @@ const Canal G = 2;
 const Canal B = 4;
 const Canal A = 8;
 const Canal GRAY = 16;
-#endif // CONSTANTS_H

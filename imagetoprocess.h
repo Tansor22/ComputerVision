@@ -6,8 +6,9 @@
 #include <helper.h>
 #include <pointofinterest.h>
 #include "poishandler.h"
-#include "sequentialconvolutionaltool.h"
-#include "parallelconvolutionaltool.h"
+#include "sequentialconvolutiontool.h"
+#include "parallelconvolutiontool.h"
+#include "KernelsHandler.h"
 
 
 class ImageToProcess
@@ -32,7 +33,7 @@ public:
     void setValueSafe(int x, int y, double value);
     void setValueSafe(int x, int y, QRgb rgb);
     void setDoubles(Canal type, double* doubleData, int w, int h);
-    int* toIntRGB();
+    QRgb* toIntRGB();
     QImage toQImage();
     void derivativeX();
     void save(QString fileName);
@@ -42,7 +43,7 @@ public:
     void gradient();
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);
     QList<PointOfInterest> filterPOIs(QList<PointOfInterest> pointsIn, int count);
-    void downsample();
+    void downSample();
 
     // vars
     double* doubleData;

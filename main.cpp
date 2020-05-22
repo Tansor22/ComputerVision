@@ -2,85 +2,87 @@
 #include <sandbox.h>
 #include <QApplication>
 #include "imagehandler.h"
+#include "Identity.h"
+#include "Rotate.h"
 
 const QString BUTTERFLY = "C:/Users/Sergei/Documents/QtProjects/images/butterfly.jpg";
 const QString CAPPED_GIRL = "C:/Users/Sergei/Documents/QtProjects/images/2.jpg";
 const QString HOCKEY = "C:/Users/Sergei/Documents/QtProjects/images/hockey.jpg";
 
-void demoHarris(Sandbox* sb);
-void demoMoravec(Sandbox* sb);
-// * может заходить в функцию со * или без нее.
-//В первом случае объект будет имзенен, а во втором - нет.
-// не * может заходить в функции без звездочки и с амперсандом при этом конфликт.
-// ставим возле параметра амперсанд - конфликт исчерпан,
-//но заходит почему то в функцию без амперсанда.
-void consume(ImageToProcess& itp);
-void consume(ImageToProcess itp);
-void consume(ImageToProcess* itp);
-void cppDemo();
-// с полями класса не работает
-void mutate(int& type);
-void mutate(double* d);
+// lab 1
+void demoSobel(Sandbox *sb);
 
-int main(int argc, char *argv[])
-{
+void demoGauss(Sandbox *sb);
+
+// lab 2
+void demoPyramids(Sandbox *sb);
+
+//lab3
+void demoHarris(Sandbox *sb);
+
+void demoMoravec(Sandbox *sb);
+
+// lab 4 and further
+void demoDescriptors(Sandbox *sb, Distortion *distortion);
+
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     MainForm w;
-    Sandbox* sb = new Sandbox(&w);
-    //sb->getImageViaFileName(HOCKEY);
-    sb->getImageViaFileDialog();
-    sb->descriptors(100);
+    Sandbox *sb = new Sandbox(&w);
+    // Custom
+    /*
+    sb->getImageViaFileName(HOCKEY);
+    ImageToProcess i = new ImageToProcess(sb->imagePixmap, GRAY);
+    i.gradient();
+    sb->show(i);
+     */
+
+    //demoSobel(sb);
+
+    //demoGauss(sb);
+
+    demoMoravec(sb);
+
+    //demoHarris(sb);
+
+    //demoPyramids(sb);
+
+    //demoDescriptors(sb, new Identity());
+
+    //demoDescriptors(sb, new Rotate(15));
     delete sb;
-    return a.exec();
+    return QApplication::exec();
 }
 
-// test
-void cppDemo() {
-    //ImageToProcess nonPtrObj = ImageToProcess();
-    ImageToProcess* ptrObj = new ImageToProcess();
-    consume(ptrObj);
-    qDebug() << "Out: "<< ptrObj->getType() << endl;
-    //int primitive  = 1;
-    //mutate(primitive);
-     //qDebug() << "Out primitive: "<< primitive << endl;
+void demoSobel(Sandbox *sb) {
+    sb->getImageViaFileDialog();
+    sb->sobel();
+}
 
-    mutate(ptrObj->getDoubles());
-    // можно писать люой индекс все равно вернет мусор из памяти,
-    //НО иногда (если индекс большой валится с ексепшеном)
-    // всегда изменяет как массив снаружи
-     qDebug() << "Out double pointer: "<< ptrObj->getDoubles()[0] << endl;
+void demoGauss(Sandbox *sb) {
+    sb->getImageViaFileDialog();
+    sb->gaussBlurRGB(3.1);
 }
-void consume(ImageToProcess* itp) {
-    itp->setType(2);
 
-    qDebug() << "In: "<< itp->getType() << endl;
+void demoPyramids(Sandbox *sb) {
+    sb->getImageViaFileName(HOCKEY);
+    sb->calcPyramid(2, 3, 0.0, 1.5);
 }
-void consume(ImageToProcess itp) {
-    itp.setType(2);
 
-    qDebug() << "In: "<< itp.getType() << endl;
+void demoDescriptors(Sandbox *sb, Distortion *distortion) {
+    sb->getImageViaFileName(HOCKEY);
+    sb->descriptors(100, distortion);
 }
-void consume(ImageToProcess& itp) {
-    itp.setType(2);
 
-    qDebug() << "In: "<< itp.getType() << endl;
-}
-void mutate(int& type) {
-    type = -1;
-    qDebug() << "In primitive: "<< type << endl;
-}
-void mutate(double* d) {
-    d[0] = -12345;
-    qDebug() << "In double pointer: "<< d[0] << endl;
-}
-void demoHarris(Sandbox* sb) {
+void demoHarris(Sandbox *sb) {
     sb->getImageViaFileDialog();
     ImageToProcess toShow = sb->harris(3, 100);
     sb->show(toShow);
 }
-void demoMoravec(Sandbox* sb) {
+
+void demoMoravec(Sandbox *sb) {
     sb->getImageViaFileDialog();
-    ImageToProcess toShow = sb->moravek(3, 100);
+    ImageToProcess toShow = sb->moravec(3, 100);
     sb->show(toShow);
 }
 
