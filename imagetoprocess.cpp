@@ -327,4 +327,40 @@ void ImageToProcess::setType(const Canal &value)
 {
     type = value;
 }
+// copy constructor
+ImageToProcess::ImageToProcess(const ImageToProcess &itp) {
+    w = itp.w;
+    h = itp.h;
+    oobp = itp.oobp;
+    type = itp.type;
+    try {
+        doubleData = Helper::copyOf(itp.doubleData, w * h);
+    } catch (std::bad_alloc _) {
+        qDebug() << "Bad allocation exception occurred." << endl;
+        exit(EXIT_FAILURE);
+    }
+}
 
+// = overloading
+ImageToProcess &ImageToProcess::operator=(ImageToProcess itp) {
+    w = itp.w;
+    h = itp.h;
+    oobp = itp.oobp;
+    type = itp.type;
+    try {
+        doubleData = Helper::copyOf(itp.doubleData, w * h);
+    } catch (std::bad_alloc _) {
+        qDebug() << "Bad allocation exception occurred." << endl;
+        exit(EXIT_FAILURE);
+    }
+    return *this;
+}
+
+QString ImageToProcess::PATH_TO_SAVE = "C:\\Users\\Sergei\\Desktop\\";
+void ImageToProcess::save() {
+//    auto now =
+//            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    time_t now = time(nullptr);
+//ctime(now)
+    toQImage().save(PATH_TO_SAVE + "\\report_" + Helper::randomQString() + "_.jpg", "JPG");
+}

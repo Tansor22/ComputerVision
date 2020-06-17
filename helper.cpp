@@ -13,7 +13,18 @@ QList<double> Helper::wrapInQList(double *arr, int size) {
     for (int i = 0; i < size; i++) wrapper.append(arr[i]);
     return wrapper;
 }
+QString Helper::randomQString() {
+    const QString possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+    const int randomStringLength = 12; // assuming you want random strings of 12 characters
 
+    QString randomString;
+    for (int i = 0; i < randomStringLength; ++i) {
+        int index = qrand() % possibleCharacters.length();
+        QChar nextChar = possibleCharacters.at(index);
+        randomString.append(nextChar);
+    }
+    return randomString;
+}
 QList<QList<double>> Helper::wrapInQListPerCanal(Canal type, double *arr, int w, int h) {
     QList<QList<double>> wrapper = QList<QList<double>>();
     int canalsCount = Helper::canalsCount(type);

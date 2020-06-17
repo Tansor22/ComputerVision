@@ -1,5 +1,5 @@
 #ifndef HELPER_H
-#include <constants.h>
+#include "constants.h"
 #include <math.h>
 #include <QPixmap>
 #include <QDebug>
@@ -34,6 +34,7 @@ public:
     static QRgb supplyWithRGB();
     static QString asQStringWithPrecision(double num, int precision) {return QString::number(num, 'f', precision);}
     static double* getZeroFilledArr(int size);
+    static QString randomQString();
     // templates
     template <typename T>
     // & means it will be mutated

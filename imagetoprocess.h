@@ -15,6 +15,7 @@ class ImageToProcess
 {
 
 public:
+    static QString PATH_TO_SAVE;
     enum OutOfBoundPolicy {
         EDGE,
         BLACK,
@@ -23,6 +24,10 @@ public:
     };
     ImageToProcess();
     //~ImageToProcess();
+    // copy constructor
+    ImageToProcess(const ImageToProcess &itp);
+    // = overload
+    ImageToProcess &operator=(const ImageToProcess itp);
     ImageToProcess(Canal type, double* data, int w, int h);
     ImageToProcess(QPixmap Pixmap, Canal type);
     explicit ImageToProcess(ImageToProcess *itp, OutOfBoundPolicy = EDGE);
@@ -45,6 +50,7 @@ public:
     QList<PointOfInterest> getPOIs(int winSize, bool isHarris = false);
     QList<PointOfInterest> filterPOIs(QList<PointOfInterest> pointsIn, int count);
     void downSample();
+    void save();
 
     // vars
     double* doubleData;
